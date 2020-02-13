@@ -4,4 +4,3 @@
 /new_annotations/train/via_export_csv.csv
 /new_annotations/val/via_export_csv.csv
 /*.csv
-/coco/train2017
