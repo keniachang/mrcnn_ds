@@ -43,6 +43,7 @@ def construct_base_dataset(csv_file, classes, subset, size, save_imgs, save_csv)
                 shutil.copy(src, save_imgs)
             except:
                 print('Failed to copy', src)
+        print('Images are saved in', save_imgs, 'and can be proceed.')
 
     if save_path is not None:
         save_data(new_anns, save_csv)
@@ -60,6 +61,8 @@ def construct_dark_dataset():
 
 
 if __name__ == '__main__':
+    # train: 402 annotations, 281 images
+    # val: 204 annotations, 137 imgaes
     data_path = './coco/'
     load_file = 'filter_anns.csv'
     dataset = input('Enter which dataset to construct from (train2017/val2017): ')
