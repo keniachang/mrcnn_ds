@@ -12,7 +12,7 @@ import numpy as np
 import skimage.io
 import skimage.draw
 import requests
-import cv2
+# import cv2
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./")
@@ -58,7 +58,7 @@ class CocoConfig(Config):
     # RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)
 
     # Skip detections with < 80% confidence
-    DETECTION_MIN_CONFIDENCE = 0.8
+    DETECTION_MIN_CONFIDENCE = 0.4
 
     # TRAIN_ROIS_PER_IMAGE = 512
 
@@ -125,17 +125,18 @@ class CocoDataset(utils.Dataset):
             # the image. This is only manageable since the dataset is tiny.
             image_path = os.path.join(dataset_dir, a['filename'])
 
-            if os.path.exists(image_path) is False:
-                coco_url = 'http://images.cocodataset.org/'
-                url_link = coco_url + subset + '/' + a['filename']
-                img_data = requests.get(url_link).content
-
-                with open(image_path, 'wb') as handler:
-                    handler.write(img_data)
-
-                img_dl += 1
-
-                print('Downloaded image ' + '(' + str(img_dl) + ')' + ': ' + (a['filename']))
+            # # uncomment this to download images if needed
+            # if os.path.exists(image_path) is False:
+            #     coco_url = 'http://images.cocodataset.org/'
+            #     url_link = coco_url + subset + '/' + a['filename']
+            #     img_data = requests.get(url_link).content
+            #
+            #     with open(image_path, 'wb') as handler:
+            #         handler.write(img_data)
+            #
+            #     img_dl += 1
+            #
+            #     print('Downloaded image ' + '(' + str(img_dl) + ')' + ': ' + (a['filename']))
 
             image = skimage.io.imread(image_path)
             height, width = image.shape[:2]

@@ -147,8 +147,9 @@ def filter_anno_csv(csv_file, save_path):
     return new_annos, filenames
 
 
-def count_cat_data(annotations, categories):
+def count_cat_data(annotations, categories, return_count=False):
     total = 0
+    count_dict = {}
     exceptions = []
     for category in categories:
         amount = 0
@@ -160,11 +161,16 @@ def count_cat_data(annotations, categories):
             if cat not in categories:
                 exceptions.append(annotation)
         print('Category ' + category + ' contains ' + str(amount) + ' in annotations.')
+        if return_count is True:
+            count_dict.update([(category, amount)])
         total += amount
     print('These categories are ' + str(total) + ' in total.')
     if exceptions:
         for exception in exceptions:
             print('Exception:', exception)
+
+    if return_count is True:
+        return count_dict
 
 
 def clean_data(filenames, data_folder, more_files=[]):
@@ -211,63 +217,64 @@ categories = ['dog', 'cake', 'bed']
 keys = ['filename', 'file_size', 'file_attributes', 'region_count', 'region_id', 'region_shape_attributes',
         'region_attributes']
 
-# variables
-mode = input('Enter mode (select/filter): ')
-image_dir = input('Enter image directory (e.g., ./cocoDS/val2017): ')
-csv_file = input('Enter load path for the csv file (e.g., ./new_annotations/val/via_export_csv.csv): ')
-save_csv = input('Enter save path for the new csv (e.g., ./new_annotations/val/filter_anns.csv): ')
+if __name__ == '__main__':
+    # variables
+    mode = input('Enter mode (select/filter): ')
+    image_dir = input('Enter image directory (e.g., ./cocoDS/val2017): ')
+    csv_file = input('Enter load path for the csv file (e.g., ./new_annotations/val/via_export_csv.csv): ')
+    save_csv = input('Enter save path for the new csv (e.g., ./new_annotations/val/filter_anns.csv): ')
 
-# run different process depends on mode
-if mode == 'select':
-    # get all the filenames of our dataset
-    images = glob.glob(image_dir + '/*.jpg')
-    all_file = []
-    for img in images:
-        all_file.append(os.path.basename(img))
+    # run different process depends on mode
+    if mode == 'select':
+        # get all the filenames of our dataset
+        images = glob.glob(image_dir + '/*.jpg')
+        all_file = []
+        for img in images:
+            all_file.append(os.path.basename(img))
 
-    # read csv file as dictionary and select interested annotations (csv file groups annotations of same filename)
-    file_list = read_csv(csv_file)
-    annotations = [file_list[0]]
-    for i in range(len(file_list) - 1):
-        current_row = file_list[i + 1]
-        filename = (current_row[0].split('/'))[-1]
-        try:
-            category = (current_row[-1].split(':'))[-1].split('}')[0].split('"')[1]
-            # print(category)
-        except IndexError:
-            category = current_row[-1]
-            # print(str(i + 2) + ' in csv file is ', category)
-        if filename in all_file and category in categories:
-            annotations.append(current_row)
+        # read csv file as dictionary and select interested annotations (csv file groups annotations of same filename)
+        file_list = read_csv(csv_file)
+        annotations = [file_list[0]]
+        for i in range(len(file_list) - 1):
+            current_row = file_list[i + 1]
+            filename = (current_row[0].split('/'))[-1]
+            try:
+                category = (current_row[-1].split(':'))[-1].split('}')[0].split('"')[1]
+                # print(category)
+            except IndexError:
+                category = current_row[-1]
+                # print(str(i + 2) + ' in csv file is ', category)
+            if filename in all_file and category in categories:
+                annotations.append(current_row)
 
-    # # our interested annotations
-    # print(len(annotations))     # headings (1) + annotations (697) = 698
-    # print(annotations[0], '\n', annotations[1])
+        # # our interested annotations
+        # print(len(annotations))     # headings (1) + annotations (697) = 698
+        # print(annotations[0], '\n', annotations[1])
 
-    # process filename, file_size and region_count
-    construct_anno_csv(annotations, image_dir, save_csv)
-elif mode == 'filter':
-    do_clean = input('Do you want to delete unqualified images? (y/n): ')
-    if do_clean == 'y':
-        extra_files = []
-        while True:
-            extra = input('Enter path to non-image to be deleted deleted file or no to stop '
-                          '(e.g., ./cocoDS/val2017/annotation_val.csv): ')
-            if extra == 'no':
-                break
-            extra_files.append(extra)
+        # process filename, file_size and region_count
+        construct_anno_csv(annotations, image_dir, save_csv)
+    elif mode == 'filter':
+        do_clean = input('Do you want to delete unqualified images? (y/n): ')
+        if do_clean == 'y':
+            extra_files = []
+            while True:
+                extra = input('Enter path to non-image to be deleted deleted file or no to stop '
+                              '(e.g., ./cocoDS/val2017/annotation_val.csv): ')
+                if extra == 'no':
+                    break
+                extra_files.append(extra)
 
-    # filter and get new annotations
-    anns, fns = filter_anno_csv(csv_file, save_csv)
+        # filter and get new annotations
+        anns, fns = filter_anno_csv(csv_file, save_csv)
 
-    # count the number of data for each category
-    count_cat_data(anns, categories)
+        # count the number of data for each category
+        count_cat_data(anns, categories)
 
-    # delete unqualified images
-    if do_clean == 'y':
-        clean_data(fns, image_dir, extra_files)
-        print('Finish removing.')
-else:
-    print('Invalid mode!')
+        # delete unqualified images
+        if do_clean == 'y':
+            clean_data(fns, image_dir, extra_files)
+            print('Finish removing.')
+    else:
+        print('Invalid mode!')
 
-print('Finish process.')
+    print('Finish process.')
