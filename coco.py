@@ -569,13 +569,6 @@ if __name__ == '__main__':
                     # augmentation=augmentation
                     )
 
-        # # liqun's mrcnn only training this
-        # print("Training network heads")
-        # model.train(dataset_train, dataset_train,
-        #             learning_rate=config.LEARNING_RATE,
-        #             epochs=150,
-        #             layers='heads')
-
     elif args.command == "evaluate":
         # Validation dataset
         eval_mode = input('Enter the type of evaluation (bbox/segm): ')

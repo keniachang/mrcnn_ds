@@ -1,6 +1,6 @@
 import sys
 import os
-import coco
+import cfs_coco_train as coco
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../../")

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from mrcnn import utils
 import mrcnn.model as modellib
-import coco_train as coco
+import cfs_coco_train as coco
 
 ROOT_DIR = os.path.abspath("./")
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -12,7 +12,7 @@ sys.path.append(ROOT_DIR)  # To find local version of the library
 MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 config = coco.CocoConfig()
 
-DATASET_DIR = './cocoDS'
+DATASET_DIR = './coco'
 
 
 class InferenceConfig(config.__class__):
@@ -65,14 +65,18 @@ dataset.load_coco(DATASET_DIR, "val2017")
 dataset.prepare()
 print("Images: {}\nClasses: {}".format(len(dataset.image_ids), dataset.class_names))
 
+print('\nThe save path for output needs to be the same level as logs folder containing weights.\n')
+dataset_name = input('Enter the name of the dataset (e.g., coco): ')
 eval_mode = input('Enter the mode for computing AP (first2/full/last5): ')
 weights_folder = input('Enter the folder name containing weights: ')
-output_path = input('Enter the save path for output (e.g., ./coco_eval.csv): ')
+output_path = input('Enter the save path for output (e.g., ../drive/My Drive/custom_s_coco_weights/coco_eval.csv): ')
+
+dir_path = os.path.dirname(output_path)
+w_path = dir_path + '/logs/' + weights_folder + '/mask_rcnn_' + dataset_name + '_'
 
 if eval_mode == 'first2':
     weight_amount = 1 + 2
     output = np.zeros(2)
-    w_path = './logs/' + weights_folder + '/mask_rcnn_coco_'
     i = 0
     for index in range(1, weight_amount):
         output[i] = loop_weight(index, w_path)
@@ -81,14 +85,12 @@ if eval_mode == 'first2':
 elif eval_mode == 'full':
     weight_amount = 1 + 150
     output = np.zeros(150)
-    w_path = './logs/' + weights_folder + '/mask_rcnn_coco_'
-    for i in range(weight_amount):
+    for i in range(1, weight_amount):
         output[i] = loop_weight(i, w_path)
     save_data(output, output_path)
 elif eval_mode == 'last5':
     weight_amount = 1 + 150
     output = np.zeros(5)
-    w_path = './logs/' + weights_folder + '/mask_rcnn_coco_'
     i = 0
     for index in range(146, weight_amount):     # 146-151 = m146 to m150
         output[i] = loop_weight(index, w_path)

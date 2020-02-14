@@ -1,6 +1,6 @@
 import sys
 import os
-import coco
+import cfs_coco_train as coco
 import numpy as np
 import pandas as pd
 import csv
@@ -429,7 +429,7 @@ if mode == 'original':
 
     last_model_fullname = model_name + end_model
     last_model_path = os.path.join(model_path, last_model_fullname)
-    
+
     # calculate wd
     for i in range(1, m_amount):
         last_model = load_weight(last_model_path, coco.CocoConfig())
@@ -459,7 +459,7 @@ if mode == 'original':
     save_v_path = './v.csv'
     v = []
 
-    for i in range((m_amount-1)):
+    for i in range((m_amount - 1)):
         if i == 0:
             delta_wd = wd[i] - wd[i + 1]
         elif i != (m_amount - 2):
@@ -507,7 +507,7 @@ elif mode == 'samples':
         DETECTION_MIN_CONFIDENCE = 0.8
 
 
-    coco_ids = [18, 61, 65]    # dog, cake, bed; NUM_CLASSES = 1 + 3 in CocoConfig b/c 3 categories
+    coco_ids = [18, 61, 65]  # dog, cake, bed; NUM_CLASSES = 1 + 3 in CocoConfig b/c 3 categories
     decimal_place = 8
     epoch = 1
     model_name = 'mask_rcnn_coco_'
@@ -521,7 +521,7 @@ elif mode == 'samples':
 
     save_wdp_path = './wdp' + set_num + '.csv'
     wdp = []
-    tbr = []    # to be removed saved temporary wdp file
+    tbr = []  # to be removed saved temporary wdp file
 
     if start != 1:
         temp_file = input('Enter the file path that was saving the previous computed wdp: ')
@@ -550,7 +550,7 @@ elif mode == 'samples':
         exit(1)
 
     # calculate wdp and save wdp every 5 times
-    for i in range(start, (m_amount+1)):
+    for i in range(start, (m_amount + 1)):
         last_model = load_weight(last_model_path, config)
 
         model_i = str(i).zfill(4)
@@ -595,7 +595,7 @@ elif mode == 'samples':
 
     # vp
     wd = np.asarray(read_csv('./wd.csv'), dtype=np.float64)
-    wd = np.reshape(wd, (m_amount-1))
+    wd = np.reshape(wd, (m_amount - 1))
     save_vp_path = './vp' + set_num + '.csv'
     vp = []
 
@@ -624,7 +624,7 @@ elif mode == 'diff':
     dv_sum1 = np.sum(dv1)
     print('sum of dv1: ' + str(dv_sum1))
 
-    dv1 = dv1 * 10000    # enlarge for drawing
+    dv1 = dv1 * 10000  # enlarge for drawing
     plt.plot(dv1, label='dv1')
 
     plt.legend()

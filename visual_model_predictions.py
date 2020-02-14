@@ -3,7 +3,7 @@ import sys
 import mrcnn.model as modellib
 from mrcnn import visualize
 from mrcnn.model import log
-import coco_train as coco
+import cfs_coco_train as coco
 import random
 import matplotlib.pyplot as plt
 
