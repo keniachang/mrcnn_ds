@@ -11,8 +11,10 @@ import json
 import numpy as np
 import skimage.io
 import skimage.draw
-import requests
+import tensorflow as tf
+# import requests
 # import cv2
+import imgaug
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./")
@@ -62,6 +64,8 @@ class CocoConfig(Config):
 
     # TRAIN_ROIS_PER_IMAGE = 512
 
+    DEFAULT_LOGS_DIR = '../drive/My Drive/custom_s_coco_weights/logs'
+
 
 ############################################################
 #  Dataset
@@ -96,11 +100,7 @@ class CocoDataset(utils.Dataset):
         # }
         # We mostly care about the x and y coordinates of each region
         # Note: In VIA 2.0, regions was changed from a dict to a list.
-        if subset == "train2017":
-            json_file = "./new_annotations/train/via_export_json.json"
-        else:
-            json_file = "./new_annotations/val/via_export_json.json"
-        annotations = json.load(open(json_file))
+        annotations = json.load(open(os.path.join(dataset_dir, "subset_anns.json")))
         annotations = list(annotations.values())  # don't need the dict keys
 
         # The VIA tool saves images in the JSON even if they don't have any
@@ -174,11 +174,10 @@ class CocoDataset(utils.Dataset):
 
         # Convert polygons to a bitmap mask of shape [height, width, instance_count]
         name_id = image_info["class_id"]
-        # print("\nname_id (class_id):", name_id, "\n")
+        print("\nname_id (class_id):", name_id, "\n")
 
         info = self.image_info[image_id]
-        mask = np.zeros([info["height"], info["width"], len(info["polygons"])],
-                        dtype=np.uint8)
+        mask = np.zeros([info["height"], info["width"], len(info["polygons"])], dtype=np.uint8)
         class_ids = np.array(name_id, dtype=np.int32)
 
         # print(len(info["polygons"]))
@@ -249,23 +248,112 @@ def train(model, dataset):
               4+: Train Resnet stage 4 and up
               5+: Train Resnet stage 5 and up
     """
+
+    # Image Augmentation
+    # Right/Left flip 50% of the time
+    augmentation = imgaug.augmenters.Fliplr(0.5)
+
+    # *** This training schedule is an example. Update to your needs ***
+
+    # # Training - Stage 1
     # print("Training network heads")
     # model.train(dataset_train, dataset_val,
     #             learning_rate=config.LEARNING_RATE,
-    #             epochs=150,
-    #             layers='heads')
-
+    #             epochs=40,
+    #             layers='heads',
+    #             augmentation=augmentation)
+    #
+    # # Training - Stage 2
+    # # Finetune layers from ResNet stage 4 and up
     # print("Fine tune Resnet stage 4 and up")
     # model.train(dataset_train, dataset_val,
-    #             learning_rate=config.LEARNING_RATE/10,
-    #             epochs=40,
-    #             layers='heads')
+    #             learning_rate=config.LEARNING_RATE,
+    #             epochs=120,
+    #             layers='4+',
+    #             augmentation=augmentation)
 
-    print("train all layers")
+    # Training - Stage 3
+    # Fine tune all layers
+    print("Fine tune all layers")
+    lr_factor = 1   # 10
+    eps = 150       # 160
     model.train(dataset_train, dataset_val,
-                learning_rate=config.LEARNING_RATE/10,
-                epochs=150,
-                layers='all')
+                learning_rate=config.LEARNING_RATE / lr_factor,
+                epochs=eps,
+                layers='all',
+                augmentation=augmentation)
+
+
+def color_splash(image, mask):
+    """Apply color splash effect.
+    image: RGB image [height, width, 3]
+    mask: instance segmentation mask [height, width, instance count]
+    Returns result image.
+    """
+    # Make a grayscale copy of the image. The grayscale copy still
+    # has 3 RGB channels, though.
+    gray = skimage.color.gray2rgb(skimage.color.rgb2gray(image)) * 255
+    # Copy color pixels from the original color image where mask is set
+    if mask.shape[-1] > 0:
+        # We're treating all instances as one, so collapse the mask into one layer
+        mask = (np.sum(mask, -1, keepdims=True) >= 1)
+        splash = np.where(mask, image, gray).astype(np.uint8)
+    else:
+        splash = gray.astype(np.uint8)
+    return splash
+
+
+def detect_and_color_splash(model, image_path=None, video_path=None):
+    assert image_path or video_path
+    import datetime
+
+    # Image or video?
+    if image_path:
+        # Run model detection and generate the color splash effect
+        print("Running on {}".format(args.image))
+        # Read image
+        image = skimage.io.imread(args.image)
+        # Detect objects
+        r = model.detect([image], verbose=1)[0]
+        # Color splash
+        splash = color_splash(image, r['masks'])
+        # Save output
+        file_name = "splash_{:%Y%m%dT%H%M%S}.jpg".format(datetime.datetime.now())
+        skimage.io.imsave(file_name, splash)
+    elif video_path:
+        import cv2
+        # Video capture
+        vcapture = cv2.VideoCapture(video_path)
+        width = int(vcapture.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(vcapture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = vcapture.get(cv2.CAP_PROP_FPS)
+
+        # Define codec and create video writer
+        file_name = "splash_{:%Y%m%dT%H%M%S}.avi".format(datetime.datetime.now())
+        vwriter = cv2.VideoWriter(file_name,
+                                  cv2.VideoWriter_fourcc(*'MJPG'),
+                                  fps, (width, height))
+
+        count = 0
+        success = True
+        while success:
+            print("frame: ", count)
+            # Read next image
+            success, image = vcapture.read()
+            if success:
+                # OpenCV returns images as BGR, convert to RGB
+                image = image[..., ::-1]
+                # Detect objects
+                r = model.detect([image], verbose=0)[0]
+                # Color splash
+                splash = color_splash(image, r['masks'])
+                # RGB -> BGR to save image to video
+                splash = splash[..., ::-1]
+                # Add image to video writer
+                vwriter.write(splash)
+                count += 1
+        vwriter.release()
+    print("Saved to ", file_name)
 
 
 ############################################################
@@ -286,7 +374,7 @@ if __name__ == '__main__':
     config.display()
 
     # Create model
-    model = modellib.MaskRCNN(mode="training", config=config, model_dir=DEFAULT_LOGS_DIR)
+    model = modellib.MaskRCNN(mode="training", config=config, model_dir=config.DEFAULT_LOGS_DIR)
 
     # Load weights
     if weight == "imagenet":
@@ -299,5 +387,5 @@ if __name__ == '__main__':
         model.load_weights(weight, by_name=True)
 
     # ******************************************* train coco
-    dataset = './cocoDS'
+    dataset = './coco'
     train(model, dataset)
