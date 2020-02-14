@@ -47,7 +47,8 @@ class CocoConfig(Config):
     NUM_CLASSES = 1 + 3  # Background + catagory
 
     # Number of training steps per epoch
-    STEPS_PER_EPOCH = 300
+    # STEPS_PER_EPOCH = 300
+    STEPS_PER_EPOCH = 120
 
     # Number of validation steps to run at the end of every training epoch.
     # A bigger number improves accuracy of validation stats, but slows

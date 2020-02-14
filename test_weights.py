@@ -85,8 +85,10 @@ if eval_mode == 'first2':
 elif eval_mode == 'full':
     weight_amount = 1 + 150
     output = np.zeros(150)
-    for i in range(1, weight_amount):
-        output[i] = loop_weight(i, w_path)
+    i = 0
+    for index in range(1, weight_amount):
+        output[i] = loop_weight(index, w_path)
+        i += 1
     save_data(output, output_path)
 elif eval_mode == 'last5':
     weight_amount = 1 + 150
