@@ -555,6 +555,7 @@ if __name__ == '__main__':
                 if tbr:
                     rm_file = save_csv_dir + 'wdp' + set_num + '_' + str(tbr[0]) + '.csv'
                     os.remove(rm_file)
+                    del tbr[0]
 
                 temp_save_wdp = save_csv_dir + 'wdp' + set_num + '_' + str(i) + '.csv'
                 temp_wdp = np.asarray(wdp, dtype=np.float64)
