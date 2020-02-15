@@ -405,7 +405,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Construct the dataset used for experiment.')
     parser.add_argument('--mode', required=True,
-                        metavar="<original|samples|diff>",
+                        metavar="<original|samples>",
                         help="Kind of experiment to be conducted.")
     parser.add_argument('--dataPath', required=True,
                         metavar="<folder_name_of_weights>",
@@ -418,20 +418,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     mode = args.mode
-    assert mode in ['original', 'samples', 'diff']
+    assert mode in ['original', 'samples']
     folder_name = args.dataPath
     m_amount = args.modelAmount
 
     # variables
     decimal_place = 8
+    model_name = 'mask_rcnn_coco_'
     save_csv_dir = '../drive/My Drive/cfs_' + folder_name + '/'
     # os.makedirs(save_csv_dir, exist_ok=True)
     pathlib.Path(save_csv_dir).mkdir(parents=True, exist_ok=True)
+    lr_factor = 1
+    eps = 1
 
     # calculate wd, v for original footprint
     if mode == 'original':
         model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
-        model_name = 'mask_rcnn_coco_'
         end_model = (str(m_amount).zfill(4)) + '.h5'
 
         save_wd_path = save_csv_dir + 'wd.csv'
@@ -459,7 +461,7 @@ if __name__ == '__main__':
         # save wd
         wd = np.asarray(wd, dtype=np.float64)
         np.savetxt(save_wd_path, wd, delimiter=',', fmt='%f')
-        print('The wasserstein distances are computed and saved.')
+        print('The wasserstein distances are computed and saved.\n')
         # NOTE: wd[0] is the wd between m1 and end model (m150) ... wd[148] = wd between m149 and m150
 
         # velocity
@@ -481,21 +483,16 @@ if __name__ == '__main__':
 
         v = np.asarray(v, dtype=np.float64)
         np.savetxt(save_v_path, v, delimiter=',', fmt='%f')
-        print('The velocities are computed and saved.')
+        print('The velocities are computed and saved.\n')
 
     # calculate wdp, vp with different samples
     elif mode == 'samples':
-        epoch = 1
-        model_name = 'mask_rcnn_coco_'
-        folder_name = input('Which folder in logs saving the weights? Enter: ')
-        m_amount = int(input('Enter amount of model (m1 to m150, then enter 150): '))
-        start = int(input('Start or continue load & train from which model for wdp? Enter: '))
-        set_num = input('Which experiment set number is this (1/2/3.1 to 3.9/4/5)? Enter: ')
+        start = int(input('Start or continue from which model for wdp? Enter: '))
+        set_num = input('Which experiment set number is this (1/2/3.1 to 3.2/4)? Enter: ')
         model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
-        end_model = str(m_amount).zfill(4)
-        end_model = end_model + '.h5'
+        end_model = (str(m_amount).zfill(4)) + '.h5'
 
-        save_wdp_path = './wdp' + set_num + '.csv'
+        save_wdp_path = save_csv_dir + 'wdp' + set_num + '.csv'
         wdp = []
         tbr = []  # to be removed saved temporary wdp file
 
@@ -512,32 +509,38 @@ if __name__ == '__main__':
         last_model_fullname = model_name + end_model
         last_model_path = os.path.join(model_path, last_model_fullname)
 
-        config = CocoConfig()
-        coco_path = os.path.join(ROOT_DIR, "cocoDS")
+        config = coco.CocoConfig()
+        coco_path = './coco'
         # choose data depending on set_num
         if set_num == '1':
             dataset_train = coco.CocoDataset()
-            dataset_train.load_coco(coco_path, "val", year="2017", class_ids=coco_ids, auto_download=False)
+            dataset_train.load_coco(coco_path, "samples")
             dataset_train.prepare()
         elif set_num == '2':
-            pass
+            dataset_train = coco.CocoDataset()
+            dataset_train.load_coco(coco_path, "dark")
+            dataset_train.prepare()
         else:
+            print('****************************************')
             print('Other experiments of this mode is to be implemented except set numbers of 1 and 2!')
+            print('****************************************')
             exit(1)
+
+        dataset_val = coco.CocoDataset()
+        dataset_val.load_coco(coco_path, "val2017")
+        dataset_val.prepare()
 
         # calculate wdp and save wdp every 5 times
         for i in range(start, (m_amount + 1)):
-            last_model = load_weight(last_model_path, config)
+            last_model = load_weight(last_model_path, coco.CocoConfig())
 
-            model_i = str(i).zfill(4)
-            model_i = model_i + '.h5'
+            model_i = (str(i).zfill(4)) + '.h5'
             model_i_fullname = model_name + model_i
             current_model_path = os.path.join(model_path, model_i_fullname)
-            current_model = load_weight(current_model_path, config)
-            current_model.train(dataset_train, dataset_train,
-                                learning_rate=config.LEARNING_RATE,
-                                epochs=epoch,
-                                # layers='heads'
+            current_model = load_weight(current_model_path, coco.CocoConfig())
+            current_model.train(dataset_train, dataset_val,
+                                learning_rate=config.LEARNING_RATE / lr_factor,
+                                epochs=eps,
                                 layers='all')
 
             wdr, wdc, wdd, wdn = calculate_wd_models_head(last_model, current_model)
@@ -550,29 +553,29 @@ if __name__ == '__main__':
 
             if (i % 5 == 0) and (i != m_amount):
                 if tbr:
-                    rm_file = './wdp' + set_num + '_' + str(tbr[0]) + '.csv'
+                    rm_file = save_csv_dir + 'wdp' + set_num + '_' + str(tbr[0]) + '.csv'
                     os.remove(rm_file)
 
-                temp_save_wdp = './wdp' + set_num + '_' + str(i) + '.csv'
+                temp_save_wdp = save_csv_dir + 'wdp' + set_num + '_' + str(i) + '.csv'
                 temp_wdp = np.asarray(wdp, dtype=np.float64)
                 np.savetxt(temp_save_wdp, temp_wdp, delimiter=',', fmt='%f')
                 tbr.append(i)
 
         # save wdp
         if tbr:
-            rm_file = './wdp' + set_num + '_' + str(tbr[0]) + '.csv'
+            rm_file = save_csv_dir + 'wdp' + set_num + '_' + str(tbr[0]) + '.csv'
             os.remove(rm_file)
 
         wdp = np.asarray(wdp, dtype=np.float64)
         np.savetxt(save_wdp_path, wdp, delimiter=',', fmt='%f')
         print('The wd prime of each model is calculated and saved.\n')
-
         # NOTE: wdp[0] is the wd between m1' and end model (m150) ... wdp[149] = wd between m150' and m150
 
         # vp
-        wd = np.asarray(read_csv('./wd.csv'), dtype=np.float64)
+        load_wd_path = save_csv_dir + 'wd.csv'
+        wd = np.asarray(read_csv(load_wd_path), dtype=np.float64)
         wd = np.reshape(wd, (m_amount - 1))
-        save_vp_path = './vp' + set_num + '.csv'
+        save_vp_path = save_csv_dir + 'vp' + set_num + '.csv'
         vp = []
 
         for i in range(m_amount):
@@ -583,7 +586,7 @@ if __name__ == '__main__':
             else:
                 delta_wd_prime = wdp[i]
 
-            current_v_prime = delta_wd_prime / (2 * epoch)
+            current_v_prime = delta_wd_prime / (2 * eps)
             current_v_prime = round(current_v_prime, decimal_place)
             vp.append(current_v_prime)
 
@@ -591,20 +594,9 @@ if __name__ == '__main__':
         np.savetxt(save_vp_path, vp, delimiter=',', fmt='%f')
         print('The velocity prime of each model is calculated and saved.\n')
 
-    # plot results
-    elif mode == 'diff':
-        v = (np.reshape(np.array(read_csv('v.csv')), 101)).astype(float)
-        vp1 = (np.reshape(np.array(read_csv('vp1.csv')), 101)).astype(float)
-        vp1 = vp1[:-1]
-        dv1 = np.subtract(vp1, v)
-        dv_sum1 = np.sum(dv1)
-        print('sum of dv1: ' + str(dv_sum1))
-
-        dv1 = dv1 * 10000  # enlarge for drawing
-        plt.plot(dv1, label='dv1')
-
-        plt.legend()
-        plt.show()
-
     else:
+        print('****************************************')
         print('Mode entered is out of scope!')
+        print('****************************************')
+
+print('\nFinish the experiment.')

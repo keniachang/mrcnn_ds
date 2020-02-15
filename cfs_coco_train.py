@@ -83,7 +83,7 @@ class CocoDataset(utils.Dataset):
         self.add_class("coco", 3, "bed")
 
         # Train or validation dataset?
-        assert subset in ["train2017", "val2017"]
+        assert subset in ["train2017", "val2017", "samples", "dark"]
         dataset_dir = os.path.join(dataset_dir, subset)
         # Load annotations
         # VGG Image Annotator (up to version 1.6) saves each image in the form:
