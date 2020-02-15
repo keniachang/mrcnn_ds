@@ -1,5 +1,11 @@
 """
-Sample Usage: python construst_small_dataset.py --mode=small --dataPath=./coco/ --dataset=samples --size=30 --load=./coco/train2017/subset_anns.csv --copyDir=./coco/train2017/
+Sample Usage 1: python construst_small_dataset.py --mode=small --dataPath=./coco/ --dataset=train2017 --size=400 --load=./new_annotations/train/filter_anns.csv --copyDir=./cocoDS/train2017/
+
+Sample Usage 2: python construst_small_dataset.py --mode=small --dataPath=./coco/ --dataset=val2017 --size=200 --load=./new_annotations/val/filter_anns.csv --copyDir=./cocoDS/val2017/
+
+Sample Usage 3: python construst_small_dataset.py --mode=small --dataPath=./coco/ --dataset=samples --size=30 --load=./coco/train2017/subset_anns.csv --copyDir=./coco/train2017/
+
+Sample Usage 4: python construst_small_dataset.py --mode=dark --dataPath=./coco/ --dataset=dark --load=./coco/samples/subset_anns.csv --copyDir=./coco/samples/
 """
 
 from annotations_processing import read_csv, save_data, count_cat_data, categories
@@ -7,6 +13,10 @@ import ast
 import pathlib
 import os
 import shutil
+import glob
+import skimage.io
+import numpy as np
+import cv2
 
 
 def check_data_dir(path, data_folder):
@@ -14,7 +24,7 @@ def check_data_dir(path, data_folder):
     pathlib.Path(dataset_path).mkdir(parents=True, exist_ok=True)
 
 
-def construct_base_dataset(csv_file, classes, size, save_filenames_path, save_imgs, copy_imgs_dir, save_csv):
+def construct_base_dataset(csv_file, classes, size, save_filenames_path, save_imgs_path, copy_imgs_from, save_csv):
     # cat_size = round(size / len(classes)) + 1
     cat_size = round(size / len(classes))
     print('Each category will have', cat_size, 'annotations for this constructed dataset.')
@@ -49,15 +59,15 @@ def construct_base_dataset(csv_file, classes, size, save_filenames_path, save_im
     save_data(filenames, save_filenames_path)
     print('The constructed dataset contains', len(filenames), 'images.')
 
-    if save_imgs is not None:
+    if save_imgs_path is not None:
         for filename in filenames:
-            src = copy_imgs_dir + filename
+            src = copy_imgs_from + filename
             src = os.path.abspath(src)
             try:
-                shutil.copy(src, save_imgs)
+                shutil.copy(src, save_imgs_path)
             except:
                 print('Failed to copy', src)
-        print('Images are saved in', save_imgs, 'and can be proceed.')
+        print('Images are saved in', save_imgs_path, 'and can be proceed.')
 
     if save_path is not None:
         save_data(new_anns, save_csv)
@@ -66,8 +76,32 @@ def construct_base_dataset(csv_file, classes, size, save_filenames_path, save_im
     return new_anns, filenames
 
 
-def construct_dark_dataset():
-    pass
+def construct_dark_dataset(csv_file, save_imgs_path, copy_imgs_from, save_csv):
+    annotations = read_csv(csv_file)
+    print('Total amount of annotations is', (len(annotations) - 1), 'in specified annotation csv file.')
+
+    filenames = glob.glob(copy_imgs_from + '*.jpg')
+    imgs_names = []
+    for filename in filenames:
+        imgs_names.append(os.path.basename(filename))
+
+    print('The constructed dataset contains', len(filenames), 'images.')
+
+    if save_imgs_path is not None:
+        # get every image and turn it dark, then save it
+        for img_name in imgs_names:
+            src = copy_imgs_from + img_name
+            dst = save_imgs_path + img_name
+
+            image = skimage.io.imread(src)
+            dark_img = np.zeros(image.shape, np.uint8)
+            cv2.imshow(('Dark image of ' + img_name), dark_img)
+            cv2.imwrite(dst, dark_img)
+        print('Images are processed and saved in', save_imgs_path)
+
+    if save_path is not None:
+        save_data(annotations, save_csv)
+        print('The constructed dataset annotation is saved as', save_csv)
 
 
 if __name__ == '__main__':
@@ -83,7 +117,8 @@ if __name__ == '__main__':
                         metavar="<constructed_dataset_folder>",
                         help="The folder name saving the data of the constructed dataset, such as train2017, val2017, "
                              "samples, or dark")
-    parser.add_argument('--size', required=True,
+    parser.add_argument('--size', required=False,
+                        default=100,
                         metavar="<size>",
                         help="Size of the constructed dataset, each category takes equal amount if possible",
                         type=int)
@@ -113,6 +148,10 @@ if __name__ == '__main__':
     copy_imgs_path = args.copyDir
     do_save = args.saveAnn
 
+    print('\n****************************************')
+    print('Start process...')
+    print('****************************************')
+
     assert mode in ['small', 'dark']
     assert len(categories) > 0
     assert dataset_size >= len(categories)
@@ -131,18 +170,19 @@ if __name__ == '__main__':
     if mode == 'small':
         # train: 402 annotations, 281 images
         # val: 204 annotations, 137 imgaes
-        print('****************************************')
-        print('Start process...')
-        print('****************************************')
+        # samples: 30 annotations, 19 images
+
         check_data_dir(data_path, dataset)
         save_fns_path = data_path + dataset + '_images.csv'
         anns, fns = construct_base_dataset(load_path, categories, dataset_size, save_fns_path,
                                            imgs_path, copy_imgs_path, save_path)
     elif mode == 'dark':
-        pass
+        # dark
+        check_data_dir(data_path, dataset)
+        construct_dark_dataset(load_path, imgs_path, copy_imgs_path, save_path)
     else:
         print('Invalid mode!')
 
     print('****************************************')
     print('Finish process.')
-    print('****************************************')
+    print('****************************************\n')
