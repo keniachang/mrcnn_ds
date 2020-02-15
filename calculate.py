@@ -8,17 +8,9 @@ import shutil
 import matplotlib.pyplot as plt
 import scipy.stats as ss
 from keras import backend as K
-
-# Root directory of the project
-ROOT_DIR = os.path.abspath("../../")
-
-# Import Mask RCNN
-sys.path.append(ROOT_DIR)  # To find local version of the library
 from mrcnn.config import Config
 import mrcnn.model as mlib
-
-DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "logs")
-SAVE_MODEL_DIR = os.path.join(DEFAULT_LOGS_DIR, 'generated')
+import pathlib
 
 #
 # mrcnn_class_logits
@@ -216,6 +208,9 @@ coco_classes = ['person', 'bicycle', 'car', 'motorcycle', 'airplane',
                 'toaster', 'sink', 'refrigerator', 'book', 'clock',
                 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
 
+DEFAULT_LOGS_DIR = coco.CocoConfig().DEFAULT_LOGS_DIR
+SAVE_MODEL_DIR = os.path.join(DEFAULT_LOGS_DIR, 'exp_generated')
+
 
 def save_data(data, path):
     # 字典中的key值即为csv中列名
@@ -405,230 +400,211 @@ def spe_lightweight_sequence_analysis(dataset_path, weight_path, output_path, ma
     save_data(list, os.path.join(output_path, mark + 'list.csv'))
 
 
-# ...................................................................................
-# save_data(wd_r, 'logs/Experiments/compare_resnet_coco/result_r.csv')
-#
-# plt.bar(range(len(wd_array)),wd_array)
-# plt.savefig('logs/Experiments/compare_resnet_coco/image.png')
-# plt.close()
+if __name__ == '__main__':
+    import argparse
 
-mode = input('Which mode is this (original/samples/diff)? Enter: ')
+    parser = argparse.ArgumentParser(description='Construct the dataset used for experiment.')
+    parser.add_argument('--mode', required=True,
+                        metavar="<original|samples|diff>",
+                        help="Kind of experiment to be conducted.")
+    parser.add_argument('--dataPath', required=True,
+                        metavar="<folder_name_of_weights>",
+                        help="Folder name in logs containing the weights")
+    parser.add_argument('--modelAmount', required=False,
+                        default=150,
+                        metavar="<m_amount>",
+                        help="Amount of models in weights folder (e.g., 150 for m1 to m150) (default is 150)",
+                        type=int)
+    args = parser.parse_args()
 
-# calculate wd, v for original footprint
-if mode == 'original':
-    folder_name = input('Which folder in logs saving the weights? Enter: ')
-    m_amount = int(input('Enter amount of model (m1 to m150, then enter 150): '))
+    mode = args.mode
+    assert mode in ['original', 'samples', 'diff']
+    folder_name = args.dataPath
+    m_amount = args.modelAmount
+
+    # variables
     decimal_place = 8
-    model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
-    model_name = 'mask_rcnn_coco_'
-    end_model = str(m_amount).zfill(4)
-    end_model = end_model + '.h5'
+    save_csv_dir = '../drive/My Drive/cfs_' + folder_name + '/'
+    # os.makedirs(save_csv_dir, exist_ok=True)
+    pathlib.Path(save_csv_dir).mkdir(parents=True, exist_ok=True)
 
-    save_wd_path = './wd.csv'
-    wd = []
+    # calculate wd, v for original footprint
+    if mode == 'original':
+        model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
+        model_name = 'mask_rcnn_coco_'
+        end_model = (str(m_amount).zfill(4)) + '.h5'
 
-    last_model_fullname = model_name + end_model
-    last_model_path = os.path.join(model_path, last_model_fullname)
+        save_wd_path = save_csv_dir + 'wd.csv'
+        wd = []
 
-    # calculate wd
-    for i in range(1, m_amount):
-        last_model = load_weight(last_model_path, coco.CocoConfig())
+        last_model_fullname = model_name + end_model
+        last_model_path = os.path.join(model_path, last_model_fullname)
 
-        model_i = str(i).zfill(4)
-        model_i = model_i + '.h5'
-        model_i_fullname = model_name + model_i
-        current_model_path = os.path.join(model_path, model_i_fullname)
-        current_model = load_weight(current_model_path, coco.CocoConfig())
+        # calculate wd
+        for i in range(1, m_amount):
+            last_model = load_weight(last_model_path, coco.CocoConfig())
 
-        wdr, wdc, wdd, wdn = calculate_wd_models_head(last_model, current_model)
-        current_wd = wdr + wdc + wdd + wdn
-        current_wd = round(current_wd, decimal_place)
-        wd.append(current_wd)
-        print('wd' + str(i) + ' is computed')
-        K.clear_session()
+            model_i = (str(i).zfill(4)) + '.h5'
+            model_i_fullname = model_name + model_i
+            current_model_path = os.path.join(model_path, model_i_fullname)
+            current_model = load_weight(current_model_path, coco.CocoConfig())
 
-    # save wd
-    wd = np.asarray(wd, dtype=np.float64)
-    np.savetxt(save_wd_path, wd, delimiter=',', fmt='%f')
-    print('The wasserstein distance of between m0 and each model is calculated and saved.\n')
+            wdr, wdc, wdd, wdn = calculate_wd_models_head(last_model, current_model)
+            current_wd = wdr + wdc + wdd + wdn
+            current_wd = round(current_wd, decimal_place)
+            wd.append(current_wd)
+            print('wd' + str(i) + ' is computed')
+            K.clear_session()
 
-    # NOTE: wd[0] is the wd between m1 and end model (m150) ... wd[148] = wd between m149 and m150
+        # save wd
+        wd = np.asarray(wd, dtype=np.float64)
+        np.savetxt(save_wd_path, wd, delimiter=',', fmt='%f')
+        print('The wasserstein distances are computed and saved.')
+        # NOTE: wd[0] is the wd between m1 and end model (m150) ... wd[148] = wd between m149 and m150
 
-    # velocity
-    epoch = 1
-    save_v_path = './v.csv'
-    v = []
+        # velocity
+        epoch = 1
+        save_v_path = save_csv_dir + 'v.csv'
+        v = []
 
-    for i in range((m_amount - 1)):
-        if i == 0:
-            delta_wd = wd[i] - wd[i + 1]
-        elif i != (m_amount - 2):
-            delta_wd = wd[i - 1] - wd[i + 1]
+        for i in range((m_amount - 1)):
+            if i == 0:
+                delta_wd = wd[i] - wd[i + 1]
+            elif i != (m_amount - 2):
+                delta_wd = wd[i - 1] - wd[i + 1]
+            else:
+                delta_wd = wd[i]
+
+            current_v = delta_wd / (2 * epoch)
+            current_v = round(current_v, decimal_place)
+            v.append(current_v)
+
+        v = np.asarray(v, dtype=np.float64)
+        np.savetxt(save_v_path, v, delimiter=',', fmt='%f')
+        print('The velocities are computed and saved.')
+
+    # calculate wdp, vp with different samples
+    elif mode == 'samples':
+        epoch = 1
+        model_name = 'mask_rcnn_coco_'
+        folder_name = input('Which folder in logs saving the weights? Enter: ')
+        m_amount = int(input('Enter amount of model (m1 to m150, then enter 150): '))
+        start = int(input('Start or continue load & train from which model for wdp? Enter: '))
+        set_num = input('Which experiment set number is this (1/2/3.1 to 3.9/4/5)? Enter: ')
+        model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
+        end_model = str(m_amount).zfill(4)
+        end_model = end_model + '.h5'
+
+        save_wdp_path = './wdp' + set_num + '.csv'
+        wdp = []
+        tbr = []  # to be removed saved temporary wdp file
+
+        if start != 1:
+            temp_file = input('Enter the file path that was saving the previous computed wdp: ')
+            temp_size = start - 1
+            tbr.append(temp_size)
+            previous = np.asarray(read_csv(temp_file), dtype=np.float64)
+            previous = np.reshape(previous, temp_size)
+            for index in range(temp_size):
+                wdp.append(previous[index])
+            pass
+
+        last_model_fullname = model_name + end_model
+        last_model_path = os.path.join(model_path, last_model_fullname)
+
+        config = CocoConfig()
+        coco_path = os.path.join(ROOT_DIR, "cocoDS")
+        # choose data depending on set_num
+        if set_num == '1':
+            dataset_train = coco.CocoDataset()
+            dataset_train.load_coco(coco_path, "val", year="2017", class_ids=coco_ids, auto_download=False)
+            dataset_train.prepare()
+        elif set_num == '2':
+            pass
         else:
-            delta_wd = wd[i]
+            print('Other experiments of this mode is to be implemented except set numbers of 1 and 2!')
+            exit(1)
 
-        current_v = delta_wd / (2 * epoch)
-        current_v = round(current_v, decimal_place)
-        v.append(current_v)
+        # calculate wdp and save wdp every 5 times
+        for i in range(start, (m_amount + 1)):
+            last_model = load_weight(last_model_path, config)
 
-    v = np.asarray(v, dtype=np.float64)
-    np.savetxt(save_v_path, v, delimiter=',', fmt='%f')
-    print('The velocity of each model is calculated and saved.\n')
+            model_i = str(i).zfill(4)
+            model_i = model_i + '.h5'
+            model_i_fullname = model_name + model_i
+            current_model_path = os.path.join(model_path, model_i_fullname)
+            current_model = load_weight(current_model_path, config)
+            current_model.train(dataset_train, dataset_train,
+                                learning_rate=config.LEARNING_RATE,
+                                epochs=epoch,
+                                # layers='heads'
+                                layers='all')
 
-# calculate wdp, vp with different samples
-elif mode == 'samples':
-    class CocoConfig(Config):
-        """Configuration for training on MS COCO.
-        Derives from the base Config class and overrides values specific
-        to the COCO dataset.
-        """
-        # Give the configuration a recognizable name
-        NAME = "coco"
+            wdr, wdc, wdd, wdn = calculate_wd_models_head(last_model, current_model)
+            current_wd_prime = wdr + wdc + wdd + wdn
+            current_wd_prime = round(current_wd_prime, decimal_place)
+            wdp.append(current_wd_prime)
+            print('wdp' + str(i) + ' is computed')
+            K.clear_session()
+            shutil.rmtree(SAVE_MODEL_DIR, ignore_errors=True)
 
-        # We use a GPU with 12GB memory, which can fit two images.
-        # Adjust down if you use a smaller GPU.
-        IMAGES_PER_GPU = 1
+            if (i % 5 == 0) and (i != m_amount):
+                if tbr:
+                    rm_file = './wdp' + set_num + '_' + str(tbr[0]) + '.csv'
+                    os.remove(rm_file)
 
-        # Uncomment to train on 8 GPUs (default is 1)
-        # GPU_COUNT = 8
+                temp_save_wdp = './wdp' + set_num + '_' + str(i) + '.csv'
+                temp_wdp = np.asarray(wdp, dtype=np.float64)
+                np.savetxt(temp_save_wdp, temp_wdp, delimiter=',', fmt='%f')
+                tbr.append(i)
 
-        # Number of classes (including background)
-        NUM_CLASSES = 1 + 3
+        # save wdp
+        if tbr:
+            rm_file = './wdp' + set_num + '_' + str(tbr[0]) + '.csv'
+            os.remove(rm_file)
 
-        # Number of training steps per epoch
-        STEPS_PER_EPOCH = 100
+        wdp = np.asarray(wdp, dtype=np.float64)
+        np.savetxt(save_wdp_path, wdp, delimiter=',', fmt='%f')
+        print('The wd prime of each model is calculated and saved.\n')
 
-        # Number of validation steps to run at the end of every training epoch.
-        # A bigger number improves accuracy of validation stats, but slows
-        # down the training.
-        VALIDATION_STEPS = 1
+        # NOTE: wdp[0] is the wd between m1' and end model (m150) ... wdp[149] = wd between m150' and m150
 
-        # Skip detections with < 80% confidence
-        DETECTION_MIN_CONFIDENCE = 0.8
+        # vp
+        wd = np.asarray(read_csv('./wd.csv'), dtype=np.float64)
+        wd = np.reshape(wd, (m_amount - 1))
+        save_vp_path = './vp' + set_num + '.csv'
+        vp = []
 
+        for i in range(m_amount):
+            if i == 0:
+                delta_wd_prime = wd[i] - wdp[i + 1]
+            elif i != (m_amount - 1):
+                delta_wd_prime = wd[i - 1] - wdp[i + 1]
+            else:
+                delta_wd_prime = wdp[i]
 
-    coco_ids = [18, 61, 65]  # dog, cake, bed; NUM_CLASSES = 1 + 3 in CocoConfig b/c 3 categories
-    decimal_place = 8
-    epoch = 1
-    model_name = 'mask_rcnn_coco_'
-    folder_name = input('Which folder in logs saving the weights? Enter: ')
-    m_amount = int(input('Enter amount of model (m1 to m150, then enter 150): '))
-    start = int(input('Start or continue load & train from which model for wdp? Enter: '))
-    set_num = input('Which experiment set number is this (1/2/3.1 to 3.9/4/5)? Enter: ')
-    model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
-    end_model = str(m_amount).zfill(4)
-    end_model = end_model + '.h5'
+            current_v_prime = delta_wd_prime / (2 * epoch)
+            current_v_prime = round(current_v_prime, decimal_place)
+            vp.append(current_v_prime)
 
-    save_wdp_path = './wdp' + set_num + '.csv'
-    wdp = []
-    tbr = []  # to be removed saved temporary wdp file
+        vp = np.asarray(vp, dtype=np.float64)
+        np.savetxt(save_vp_path, vp, delimiter=',', fmt='%f')
+        print('The velocity prime of each model is calculated and saved.\n')
 
-    if start != 1:
-        temp_file = input('Enter the file path that was saving the previous computed wdp: ')
-        temp_size = start - 1
-        tbr.append(temp_size)
-        previous = np.asarray(read_csv(temp_file), dtype=np.float64)
-        previous = np.reshape(previous, temp_size)
-        for index in range(temp_size):
-            wdp.append(previous[index])
-        pass
+    # plot results
+    elif mode == 'diff':
+        v = (np.reshape(np.array(read_csv('v.csv')), 101)).astype(float)
+        vp1 = (np.reshape(np.array(read_csv('vp1.csv')), 101)).astype(float)
+        vp1 = vp1[:-1]
+        dv1 = np.subtract(vp1, v)
+        dv_sum1 = np.sum(dv1)
+        print('sum of dv1: ' + str(dv_sum1))
 
-    last_model_fullname = model_name + end_model
-    last_model_path = os.path.join(model_path, last_model_fullname)
+        dv1 = dv1 * 10000  # enlarge for drawing
+        plt.plot(dv1, label='dv1')
 
-    config = CocoConfig()
-    coco_path = os.path.join(ROOT_DIR, "cocoDS")
-    # choose data depending on set_num
-    if set_num == '1':
-        dataset_train = coco.CocoDataset()
-        dataset_train.load_coco(coco_path, "val", year="2017", class_ids=coco_ids, auto_download=False)
-        dataset_train.prepare()
-    elif set_num == '2':
-        pass
+        plt.legend()
+        plt.show()
+
     else:
-        print('Other experiments of this mode is to be implemented except set numbers of 1 and 2!')
-        exit(1)
-
-    # calculate wdp and save wdp every 5 times
-    for i in range(start, (m_amount + 1)):
-        last_model = load_weight(last_model_path, config)
-
-        model_i = str(i).zfill(4)
-        model_i = model_i + '.h5'
-        model_i_fullname = model_name + model_i
-        current_model_path = os.path.join(model_path, model_i_fullname)
-        current_model = load_weight(current_model_path, config)
-        current_model.train(dataset_train, dataset_train,
-                            learning_rate=config.LEARNING_RATE,
-                            epochs=epoch,
-                            # layers='heads'
-                            layers='all')
-
-        wdr, wdc, wdd, wdn = calculate_wd_models_head(last_model, current_model)
-        current_wd_prime = wdr + wdc + wdd + wdn
-        current_wd_prime = round(current_wd_prime, decimal_place)
-        wdp.append(current_wd_prime)
-        print('wdp' + str(i) + ' is computed')
-        K.clear_session()
-        shutil.rmtree(SAVE_MODEL_DIR, ignore_errors=True)
-
-        if (i % 5 == 0) and (i != m_amount):
-            if tbr:
-                rm_file = './wdp' + set_num + '_' + str(tbr[0]) + '.csv'
-                os.remove(rm_file)
-
-            temp_save_wdp = './wdp' + set_num + '_' + str(i) + '.csv'
-            temp_wdp = np.asarray(wdp, dtype=np.float64)
-            np.savetxt(temp_save_wdp, temp_wdp, delimiter=',', fmt='%f')
-            tbr.append(i)
-
-    # save wdp
-    if tbr:
-        rm_file = './wdp' + set_num + '_' + str(tbr[0]) + '.csv'
-        os.remove(rm_file)
-
-    wdp = np.asarray(wdp, dtype=np.float64)
-    np.savetxt(save_wdp_path, wdp, delimiter=',', fmt='%f')
-    print('The wd prime of each model is calculated and saved.\n')
-
-    # NOTE: wdp[0] is the wd between m1' and end model (m150) ... wdp[149] = wd between m150' and m150
-
-    # vp
-    wd = np.asarray(read_csv('./wd.csv'), dtype=np.float64)
-    wd = np.reshape(wd, (m_amount - 1))
-    save_vp_path = './vp' + set_num + '.csv'
-    vp = []
-
-    for i in range(m_amount):
-        if i == 0:
-            delta_wd_prime = wd[i] - wdp[i + 1]
-        elif i != (m_amount - 1):
-            delta_wd_prime = wd[i - 1] - wdp[i + 1]
-        else:
-            delta_wd_prime = wdp[i]
-
-        current_v_prime = delta_wd_prime / (2 * epoch)
-        current_v_prime = round(current_v_prime, decimal_place)
-        vp.append(current_v_prime)
-
-    vp = np.asarray(vp, dtype=np.float64)
-    np.savetxt(save_vp_path, vp, delimiter=',', fmt='%f')
-    print('The velocity prime of each model is calculated and saved.\n')
-
-# plot results
-elif mode == 'diff':
-    v = (np.reshape(np.array(read_csv('v.csv')), 101)).astype(float)
-    vp1 = (np.reshape(np.array(read_csv('vp1.csv')), 101)).astype(float)
-    vp1 = vp1[:-1]
-    dv1 = np.subtract(vp1, v)
-    dv_sum1 = np.sum(dv1)
-    print('sum of dv1: ' + str(dv_sum1))
-
-    dv1 = dv1 * 10000  # enlarge for drawing
-    plt.plot(dv1, label='dv1')
-
-    plt.legend()
-    plt.show()
-
-else:
-    print('Mode entered is out of scope!')
+        print('Mode entered is out of scope!')
