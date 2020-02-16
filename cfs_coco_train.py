@@ -61,7 +61,7 @@ class CocoConfig(Config):
     # RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)
 
     # Skip detections with < 60% confidence
-    DETECTION_MIN_CONFIDENCE = 0.6
+    DETECTION_MIN_CONFIDENCE = 0.7
 
     # TRAIN_ROIS_PER_IMAGE = 512
 
