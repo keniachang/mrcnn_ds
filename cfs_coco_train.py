@@ -61,7 +61,7 @@ class CocoConfig(Config):
     # RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)
 
     # Skip detections with < 60% confidence
-    DETECTION_MIN_CONFIDENCE = 0.7
+    DETECTION_MIN_CONFIDENCE = 0.6
 
     # TRAIN_ROIS_PER_IMAGE = 512
 
@@ -276,8 +276,8 @@ def train(model, dataset):
     # Training - Stage 3
     # Fine tune all layers
     print("Fine tune all layers")
-    lr_factor = 20   # 10
-    eps = 150       # 160
+    lr_factor = 100   # 10
+    eps = 300         # 160
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE / lr_factor,
                 epochs=eps,
