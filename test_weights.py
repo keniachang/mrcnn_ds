@@ -83,18 +83,21 @@ if eval_mode == 'first2':
         i += 1
     save_data(output, output_path)
 elif eval_mode == 'full':
-    weight_amount = 1 + 150
-    output = np.zeros(150)
+    m_amount = int(input('Enter the amount of models (e.g., 150 for m1 to m150):'))
+    weight_amount = 1 + m_amount
+    output = np.zeros(m_amount)
     i = 0
     for index in range(1, weight_amount):
         output[i] = loop_weight(index, w_path)
         i += 1
     save_data(output, output_path)
 elif eval_mode == 'last5':
-    weight_amount = 1 + 150
+    m_num = int(input('Enter the ending model number (e.g., 150 for m150):'))
+    weight_amount = 1 + m_num
+    start_num = weight_amount - 5
     output = np.zeros(5)
     i = 0
-    for index in range(146, weight_amount):     # 146-151 = m146 to m150
+    for index in range(start_num, weight_amount):     # 146-151 = m146 to m150
         output[i] = loop_weight(index, w_path)
         i += 1
     save_data(output, output_path)
