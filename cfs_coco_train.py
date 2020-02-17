@@ -276,7 +276,7 @@ def train(model, dataset):
     # Training - Stage 3
     # Fine tune all layers
     print("Fine tune all layers")
-    lr_factor = 100   # 10
+    lr_factor = 20   # 10
     eps = 300         # 160
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE / lr_factor,
