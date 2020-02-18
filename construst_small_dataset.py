@@ -18,6 +18,9 @@ import skimage.io
 import numpy as np
 import cv2
 
+# # construct data of one category
+# categories = ['dog']
+
 
 def check_data_dir(path, data_folder):
     dataset_path = path + data_folder

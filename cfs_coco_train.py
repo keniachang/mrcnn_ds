@@ -11,7 +11,6 @@ import json
 import numpy as np
 import skimage.io
 import skimage.draw
-import tensorflow as tf
 import requests
 # import cv2
 import imgaug
@@ -72,7 +71,7 @@ class CocoConfig(Config):
 #  Dataset
 ############################################################
 class CocoDataset(utils.Dataset):
-    def load_coco(self, dataset_dir, subset):
+    def load_coco(self, dataset_dir, subset, shift=None):
         """ Load a subset of the worker dataset.
             dataset_dir: Root directory of the dataset.
             subset: Subset to load: train or val
@@ -101,7 +100,17 @@ class CocoDataset(utils.Dataset):
         # }
         # We mostly care about the x and y coordinates of each region
         # Note: In VIA 2.0, regions was changed from a dict to a list.
-        annotations = json.load(open(os.path.join(dataset_dir, "subset_anns.json")))
+        json_ann_file = "subset_anns.json"
+        if shift is not None:
+            assert shift in ['1', '2', 'random']
+            if shift == '1':
+                json_ann_file = "subset_anns_shift1.json"
+            elif shift == '2':
+                json_ann_file = "subset_anns_shift2.json"
+            else:
+                json_ann_file = "subset_anns_shift_random.json"
+
+        annotations = json.load(open(os.path.join(dataset_dir, json_ann_file)))
         annotations = list(annotations.values())  # don't need the dict keys
 
         # The VIA tool saves images in the JSON even if they don't have any

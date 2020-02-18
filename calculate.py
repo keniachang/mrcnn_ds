@@ -520,9 +520,21 @@ if __name__ == '__main__':
             dataset_train = coco.CocoDataset()
             dataset_train.load_coco(coco_path, "dark")
             dataset_train.prepare()
+        elif set_num == '3.1':
+            dataset_train = coco.CocoDataset()
+            dataset_train.load_coco(coco_path, "samples", shift='1')
+            dataset_train.prepare()
+        elif set_num == '3.2':
+            dataset_train = coco.CocoDataset()
+            dataset_train.load_coco(coco_path, "samples", shift='2')
+            dataset_train.prepare()
+        elif set_num == '4':
+            dataset_train = coco.CocoDataset()
+            dataset_train.load_coco(coco_path, "samples", shift='random')
+            dataset_train.prepare()
         else:
             print('****************************************')
-            print('Other experiments of this mode is to be implemented except set numbers of 1 and 2!')
+            print('Invalid set number has been entered!')
             print('****************************************')
             exit(1)
 
