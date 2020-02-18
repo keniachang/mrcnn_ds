@@ -383,7 +383,7 @@ if __name__ == '__main__':
         print("Loading weights ", model_path)
         model.load_weights(model_path, by_name=True, exclude=['mrcnn_class_logits', 'mrcnn_bbox_fc',
                                                               'mrcnn_bbox', 'mrcnn_mask'])
-    else:
+    elif weight != 'none':
         print("Loading weights ", weight)
         model.load_weights(weight, by_name=True)
 
