@@ -18,11 +18,11 @@ import skimage.io
 import numpy as np
 import cv2
 
-# construct dataset for one category
-categories = ['cake']
-show_exception = False
+# # construct dataset for one category
+# categories = ['bed']
+# show_exception = False
 
-# show_exception = True
+show_exception = True
 
 
 def check_data_dir(path, data_folder):
