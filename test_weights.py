@@ -5,6 +5,7 @@ import pandas as pd
 from mrcnn import utils
 import mrcnn.model as modellib
 import cfs_coco_train as coco
+from calculate import read_csv
 
 ROOT_DIR = os.path.abspath("./")
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -82,15 +83,40 @@ if eval_mode == 'first2':
         output[i] = loop_weight(index, w_path)
         i += 1
     save_data(output, output_path)
+
 elif eval_mode == 'full':
-    m_amount = int(input('Enter the amount of models (e.g., 150 for m1 to m150):'))
-    weight_amount = 1 + m_amount
+    directory = os.path.dirname(output_path)
+    filename = (os.path.basename(output_path)).split('.')
+    temp_filename = str(filename[0]) + '_temp.' + str(filename[1])
+    temp_path = os.path.join(directory, temp_filename)
+
+    m_amount = int(input('Enter the ending model number (e.g., 150 for m150):'))
     output = np.zeros(m_amount)
-    i = 0
-    for index in range(1, weight_amount):
+
+    is_resumed = input('Do you want to resume computations of mAPs from before? (y/n): ')
+    if is_resumed == 'y':
+        mAPs_file = input('Enter the path to load the previous computations of mAPs: ')
+        previous_mAPs = np.asarray(read_csv(mAPs_file), dtype=np.float64)
+        start = previous_mAPs.shape[0]
+        previous_mAPs = previous_mAPs.reshape(start)
+        output[:start] = previous_mAPs
+        start = start + 1
+    else:
+        start = 1
+
+    end = 1 + m_amount
+
+    i = start - 1
+    for index in range(start, end):
         output[i] = loop_weight(index, w_path)
         i += 1
+
+        if (index % 5 == 0) and (index + 1 != end):
+            save_data(output, temp_path)
+
+    os.remove(temp_path)
     save_data(output, output_path)
+
 elif eval_mode == 'last5':
     m_num = int(input('Enter the ending model number (e.g., 150 for m150):'))
     weight_amount = 1 + m_num
@@ -101,6 +127,7 @@ elif eval_mode == 'last5':
         output[i] = loop_weight(index, w_path)
         i += 1
     save_data(output, output_path)
+
 else:
     print('Invalid mode entered!')
 
