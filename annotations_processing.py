@@ -147,7 +147,7 @@ def filter_anno_csv(csv_file, save_path):
     return new_annos, filenames
 
 
-def count_cat_data(annotations, categories, return_count=False):
+def count_cat_data(annotations, categories, return_count=False, show_exception=True):
     total = 0
     count_dict = {}
     exceptions = []
@@ -165,7 +165,7 @@ def count_cat_data(annotations, categories, return_count=False):
             count_dict.update([(category, amount)])
         total += amount
     print('These categories are ' + str(total) + ' in total.')
-    if exceptions:
+    if exceptions and show_exception:
         for exception in exceptions:
             print('Exception:', exception)
 

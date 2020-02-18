@@ -1,11 +1,11 @@
 """
-Sample Usage 1: python construst_small_dataset.py --mode=small --dataPath=./coco/ --dataset=train2017 --size=400 --load=./new_annotations/train/filter_anns.csv --copyDir=./cocoDS/train2017/
+Sample Usage 1: python construct_small_dataset.py --mode=small --dataPath=./coco/ --dataset=train2017 --size=400 --load=./new_annotations/train/filter_anns.csv --copyDir=./cocoDS/train2017/
 
-Sample Usage 2: python construst_small_dataset.py --mode=small --dataPath=./coco/ --dataset=val2017 --size=200 --load=./new_annotations/val/filter_anns.csv --copyDir=./cocoDS/val2017/
+Sample Usage 2: python construct_small_dataset.py --mode=small --dataPath=./coco/ --dataset=val2017 --size=200 --load=./new_annotations/val/filter_anns.csv --copyDir=./cocoDS/val2017/
 
-Sample Usage 3: python construst_small_dataset.py --mode=small --dataPath=./coco/ --dataset=samples --size=30 --load=./coco/train2017/subset_anns.csv --copyDir=./coco/train2017/
+Sample Usage 3: python construct_small_dataset.py --mode=small --dataPath=./coco/ --dataset=samples --size=30 --load=./coco/train2017/subset_anns.csv --copyDir=./coco/train2017/
 
-Sample Usage 4: python construst_small_dataset.py --mode=dark --dataPath=./coco/ --dataset=dark --load=./coco/samples/subset_anns.csv --copyDir=./coco/samples/
+Sample Usage 4: python construct_small_dataset.py --mode=dark --dataPath=./coco/ --dataset=dark --load=./coco/samples/subset_anns.csv --copyDir=./coco/samples/
 """
 
 from annotations_processing import read_csv, save_data, count_cat_data, categories
@@ -18,8 +18,11 @@ import skimage.io
 import numpy as np
 import cv2
 
-# # construct data of one category
-# categories = ['dog']
+# construct dataset for one category
+categories = ['cake']
+show_exception = False
+
+# show_exception = True
 
 
 def check_data_dir(path, data_folder):
@@ -36,7 +39,7 @@ def construct_base_dataset(csv_file, classes, size, save_filenames_path, save_im
 
     new_anns = [annotations[0]]
     filenames = []
-    cat_counts = count_cat_data(annotations, classes, return_count=True)
+    cat_counts = count_cat_data(annotations, classes, return_count=True, show_exception=show_exception)
     for cat in classes:
         if cat_size > cat_counts[cat]:
             print('Category', cat, 'can only contains', cat_counts[cat], 'annotations.')
