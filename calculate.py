@@ -433,17 +433,26 @@ if __name__ == '__main__':
 
     # calculate wd, v for original footprint
     if mode == 'original':
+        start = int(input('Start or continue from which model for wdp (e.g., 1 for m1)? Enter: '))
+
         model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
         end_model = (str(m_amount).zfill(4)) + '.h5'
 
         save_wd_path = save_csv_dir + 'wd.csv'
         wd = []
+        temp_save_wd = save_csv_dir + 'wd_temp.csv'
+        if start != 1:
+            temp_size = start - 1
+            previous = np.asarray(read_csv(temp_save_wd), dtype=np.float64)
+            previous = np.reshape(previous, temp_size)
+            for index in range(temp_size):
+                wd.append(previous[index])
 
         last_model_fullname = model_name + end_model
         last_model_path = os.path.join(model_path, last_model_fullname)
 
         # calculate wd
-        for i in range(1, m_amount):
+        for i in range(start, m_amount):
             last_model = load_weight(last_model_path, coco.CocoConfig())
 
             model_i = (str(i).zfill(4)) + '.h5'
@@ -458,9 +467,14 @@ if __name__ == '__main__':
             print('wd' + str(i) + ' is computed')
             K.clear_session()
 
+            if i % 5 == 0:
+                temp_wd = np.asarray(wd, dtype=np.float64)
+                np.savetxt(temp_save_wd, temp_wd, delimiter=',', fmt='%f')
+
         # save wd
         wd = np.asarray(wd, dtype=np.float64)
         np.savetxt(save_wd_path, wd, delimiter=',', fmt='%f')
+        os.remove(temp_save_wd)
         print('The wasserstein distances are computed and saved.\n')
         # NOTE: wd[0] is the wd between m1 and end model (m150) ... wd[148] = wd between m149 and m150
 
@@ -504,7 +518,6 @@ if __name__ == '__main__':
             previous = np.reshape(previous, temp_size)
             for index in range(temp_size):
                 wdp.append(previous[index])
-            pass
 
         last_model_fullname = model_name + end_model
         last_model_path = os.path.join(model_path, last_model_fullname)
