@@ -24,3 +24,5 @@ model_fullname = model_name + load_model
 current_model_path = os.path.join(model_path, model_fullname)
 print(current_model_path + '\n')
 current_model = load_weight(current_model_path, coco.CocoConfig())
+
+print('Load successfully.')

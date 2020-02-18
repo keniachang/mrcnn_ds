@@ -433,7 +433,7 @@ if __name__ == '__main__':
 
     # calculate wd, v for original footprint
     if mode == 'original':
-        start = int(input('Start or continue from which model for wdp (e.g., 1 for m1)? Enter: '))
+        start = int(input('Start or continue from which model for wd (e.g., 1 for m1)? Enter: '))
 
         model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
         end_model = (str(m_amount).zfill(4)) + '.h5'
