@@ -392,7 +392,7 @@ if __name__ == '__main__':
     if mode == 'original':
         start = int(input('Start or continue from which model for wd (e.g., 1 for m1)? Enter: '))
 
-        model_path = os.path.join(DEFAULT_LOGS_DIR, 'logs', folder_name)
+        model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
         end_model = (str(m_amount).zfill(4)) + '.h5'
 
         save_wd_path = save_csv_dir + folder_name + '_wd.csv'
@@ -456,6 +456,7 @@ if __name__ == '__main__':
         np.savetxt(save_v_path, v, delimiter=',', fmt='%f')
         print('The velocities are computed and saved.\n')
 
+    # TODO: Adjust 'samples' mode for worker
     # calculate wdp, vp with different samples
     elif mode == 'samples':
         start = int(input('Start or continue from which model for wdp? Enter: '))
