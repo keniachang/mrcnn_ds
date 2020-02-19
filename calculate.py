@@ -503,18 +503,17 @@ if __name__ == '__main__':
         start = int(input('Start or continue from which model for wdp? Enter: '))
         lr = float(input('Enter the learning rate of models trained: '))
         set_num = input('Which experiment set number is this (1/2/3.1 to 3.2/4)? Enter: ')
+
         model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
         end_model = (str(m_amount).zfill(4)) + '.h5'
 
         save_wdp_path = save_csv_dir + 'wdp' + set_num + '.csv'
         wdp = []
-        tbr = []  # to be removed saved temporary wdp file
 
+        temp_save_wdp = save_csv_dir + 'wdp_temp.csv'
         if start != 1:
-            temp_file = input('Enter the file path that was saving the previous computed wdp: ')
             temp_size = start - 1
-            tbr.append(temp_size)
-            previous = np.asarray(read_csv(temp_file), dtype=np.float64)
+            previous = np.asarray(read_csv(temp_save_wdp), dtype=np.float64)
             previous = np.reshape(previous, temp_size)
             for index in range(temp_size):
                 wdp.append(previous[index])
@@ -578,23 +577,12 @@ if __name__ == '__main__':
             shutil.rmtree(SAVE_MODEL_DIR, ignore_errors=True)
 
             if (i % 5 == 0) and (i != m_amount):
-                if tbr:
-                    rm_file = save_csv_dir + 'wdp' + set_num + '_' + str(tbr[0]) + '.csv'
-                    os.remove(rm_file)
-                    del tbr[0]
-
-                temp_save_wdp = save_csv_dir + 'wdp' + set_num + '_' + str(i) + '.csv'
                 temp_wdp = np.asarray(wdp, dtype=np.float64)
                 np.savetxt(temp_save_wdp, temp_wdp, delimiter=',', fmt='%f')
-                tbr.append(i)
-
-        # save wdp
-        if tbr:
-            rm_file = save_csv_dir + 'wdp' + set_num + '_' + str(tbr[0]) + '.csv'
-            os.remove(rm_file)
 
         wdp = np.asarray(wdp, dtype=np.float64)
         np.savetxt(save_wdp_path, wdp, delimiter=',', fmt='%f')
+        os.remove(temp_save_wdp)
         print('The wd prime of each model is calculated and saved.\n')
         # NOTE: wdp[0] is the wd between m1' and end model (m150) ... wdp[149] = wd between m150' and m150
 
