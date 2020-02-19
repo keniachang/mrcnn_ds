@@ -428,7 +428,6 @@ if __name__ == '__main__':
     save_csv_dir = '../drive/My Drive/cfs_' + folder_name + '/'
     # os.makedirs(save_csv_dir, exist_ok=True)
     pathlib.Path(save_csv_dir).mkdir(parents=True, exist_ok=True)
-    lr_factor = 1
     eps = 1
 
     # calculate wd, v for original footprint
@@ -502,6 +501,7 @@ if __name__ == '__main__':
     # calculate wdp, vp with different samples
     elif mode == 'samples':
         start = int(input('Start or continue from which model for wdp? Enter: '))
+        lr = float(input('Enter the learning rate of models trained: '))
         set_num = input('Which experiment set number is this (1/2/3.1 to 3.2/4)? Enter: ')
         model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
         end_model = (str(m_amount).zfill(4)) + '.h5'
@@ -523,6 +523,7 @@ if __name__ == '__main__':
         last_model_path = os.path.join(model_path, last_model_fullname)
 
         config = coco.CocoConfig()
+        config.LEARNING_RATE = lr
         coco_path = './coco'
         # choose data depending on set_num
         if set_num == '1':
@@ -564,7 +565,7 @@ if __name__ == '__main__':
             current_model_path = os.path.join(model_path, model_i_fullname)
             current_model = load_weight(current_model_path, coco.CocoConfig())
             current_model.train(dataset_train, dataset_val,
-                                learning_rate=config.LEARNING_RATE / lr_factor,
+                                learning_rate=config.LEARNING_RATE,
                                 epochs=eps,
                                 layers='all')
 
