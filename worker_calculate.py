@@ -388,12 +388,12 @@ if __name__ == '__main__':
     pathlib.Path(save_csv_dir).mkdir(parents=True, exist_ok=True)
     eps = 1
 
+    model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
+    end_model = (str(m_amount).zfill(4)) + '.h5'
+
     # calculate wd, v for original footprint
     if mode == 'original':
         start = int(input('Start or continue from which model for wd (e.g., 1 for m1)? Enter: '))
-
-        model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
-        end_model = (str(m_amount).zfill(4)) + '.h5'
 
         save_wd_path = save_csv_dir + folder_name + '_wd.csv'
         wd = []
@@ -463,13 +463,10 @@ if __name__ == '__main__':
         lr = float(input('Enter the learning rate of models trained: '))
         set_num = input('Which experiment set number is this (1/2/3.1 to 3.2/4)? Enter: ')
 
-        model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
-        end_model = (str(m_amount).zfill(4)) + '.h5'
-
-        save_wdp_path = save_csv_dir + 'wdp' + set_num + '.csv'
+        save_wdp_path = save_csv_dir + folder_name + '_wdp' + set_num + '.csv'
         wdp = []
 
-        temp_save_wdp = save_csv_dir + 'wdp_temp.csv'
+        temp_save_wdp = save_csv_dir + folder_name + '_wdp_temp.csv'
         if start != 1:
             temp_size = start - 1
             previous = np.asarray(read_csv(temp_save_wdp), dtype=np.float64)
