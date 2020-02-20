@@ -238,7 +238,8 @@ def load_weight(path, config):
     model1 = mlib.MaskRCNN(mode="training", config=config, model_dir=SAVE_MODEL_DIR)
 
     # changes made adding exclude arguments for samples mode when load and train
-    model1.load_weights(path, by_name=True, exclude=['mrcnn_class_logits', 'mrcnn_bbox_fc', 'mrcnn_bbox', 'mrcnn_mask'])
+    # model1.load_weights(path, by_name=True, exclude=['mrcnn_class_logits', 'mrcnn_bbox_fc', 'mrcnn_bbox', 'mrcnn_mask'])
+    model1.load_weights(path, by_name=True)
     return model1
 
 
