@@ -367,23 +367,11 @@ def calculate_wd_models_all(model1, model2):
     for name in train_normal_layers:
         wd_normal = wd_normal + calculate_wd_bnlayers(model1, model2, name)
 
-    wd_conv_array = 0
-    wd_a = 0
-    wd_b = 0
-    wd_c = 0
-    wd_r = 0
+    wd_resnet_conv = 0
     for name in train_resnet_conv:
-        wd_conv_array = wd_conv_array + calculate_wd_layers(model1, model2, name)
-    for name in train_resnet_conv_a:
-        wd_a = wd_a + calculate_wd_layers(model1, model2, name)
-    for name in train_resnet_conv_b:
-        wd_b = wd_b + calculate_wd_layers(model1, model2, name)
-    for name in train_resnet_conv_c:
-        wd_c = wd_c + calculate_wd_layers(model1, model2, name)
-    for name in train_resnet_conv_r:
-        wd_r = wd_r + calculate_wd_layers(model1, model2, name)
+        wd_resnet_conv = wd_resnet_conv + calculate_wd_layers(model1, model2, name)
 
-    final_wd = wd_rpn + wd_conv + wd_dense + wd_normal + wd_conv_array + wd_a + wd_b + wd_c + wd_r
+    final_wd = wd_rpn + wd_conv + wd_dense + wd_normal + wd_resnet_conv
 
     return final_wd
 
