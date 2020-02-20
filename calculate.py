@@ -27,7 +27,7 @@ import pathlib
 
 # head structure
 train_conv_layers = ['fpn_c5p5', 'fpn_c4p4', 'fpn_c3p3', 'fpn_c2p2', 'fpn_p5', 'fpn_p2', 'fpn_p3', 'fpn_p4']
-train_dence_layers = ['mrcnn_mask_conv1', 'mrcnn_mask_conv2', 'mrcnn_mask_conv3', 'mrcnn_mask_conv4',
+train_dense_layers = ['mrcnn_mask_conv1', 'mrcnn_mask_conv2', 'mrcnn_mask_conv3', 'mrcnn_mask_conv4',
                       'mrcnn_bbox_fc', 'mrcnn_mask_deconv', 'mrcnn_class_logits', 'mrcnn_mask']
 train_normal_layers = ['mrcnn_mask_bn1', 'mrcnn_mask_bn2', 'mrcnn_mask_bn3', 'mrcnn_mask_bn4']
 train_rpn_model = 'rpn_model'
@@ -213,10 +213,7 @@ SAVE_MODEL_DIR = os.path.join(DEFAULT_LOGS_DIR, 'exp_generated')
 
 
 def save_data(data, path):
-    # 字典中的key值即为csv中列名
     dataframe = pd.DataFrame(data)
-
-    # 将DataFrame存储为csv,index表示是否显示行名，default=True
     dataframe.to_csv(path, index=False, header=False)
 
 
@@ -331,7 +328,7 @@ def calculate_wd_models_head(model1, model2):
     for name in train_conv_layers:
         wd_conv = wd_conv + calculate_wd_layers(model1, model2, name)
     wd_dense = 0
-    for name in train_dence_layers:
+    for name in train_dense_layers:
         wd_dense = wd_dense + calculate_wd_layers(model1, model2, name)
     wd_normal = 0
     for name in train_normal_layers:
@@ -348,7 +345,6 @@ def calculate_wd_models_backboon(model1, model2):
     wd_r = []
     for name in train_resnet_conv:
         wd_conv_array.append(calculate_wd_layers(model1, model2, name))
-
     for name in train_resnet_conv_a:
         wd_a.append(calculate_wd_layers(model1, model2, name))
     for name in train_resnet_conv_b:
@@ -361,44 +357,37 @@ def calculate_wd_models_backboon(model1, model2):
     return wd_conv_array, wd_a, wd_b, wd_c, wd_r
 
 
-def sequence_analysis(set_path, path_target):
-    file_ls = os.listdir(set_path)
-    file_ls.sort()
-    wd = []
-    counter = 0
-    for file_name in file_ls:
-        extend = os.path.splitext(file_name)[-1][1:]
-        if (extend != 'h5'):
-            continue
-        print(file_name)
-        weights_path = os.path.join(set_path, file_name)
-        model_source = load_weight(weights_path, coco.CocoConfig())
-        model_target = load_weight(path_target, coco.CocoConfig())
-        wd.append(calculate_wd_models_head(model_source, model_target))
-        print('**************', len(wd), '**************')
-        K.clear_session()
-        # if counter>2:
-        #     break
-        # else:
-        #     counter = counter+1
-    print('Complete!')
-    return wd
+def calculate_wd_models_all(model1, model2):
+    wd_rpn = calculate_wd_layers(model1, model2, train_rpn_model)
+    wd_conv = 0
+    wd_dense = 0
+    wd_normal = 0
+    for name in train_conv_layers:
+        wd_conv = wd_conv + calculate_wd_layers(model1, model2, name)
+    for name in train_dense_layers:
+        wd_dense = wd_dense + calculate_wd_layers(model1, model2, name)
+    for name in train_normal_layers:
+        wd_normal = wd_normal + calculate_wd_bnlayers(model1, model2, name)
 
+    wd_conv_array = 0
+    wd_a = 0
+    wd_b = 0
+    wd_c = 0
+    wd_r = 0
+    for name in train_resnet_conv:
+        wd_conv_array = wd_conv_array + calculate_wd_layers(model1, model2, name)
+    for name in train_resnet_conv_a:
+        wd_a = wd_a + calculate_wd_layers(model1, model2, name)
+    for name in train_resnet_conv_b:
+        wd_b = wd_b + calculate_wd_layers(model1, model2, name)
+    for name in train_resnet_conv_c:
+        wd_c = wd_c + calculate_wd_layers(model1, model2, name)
+    for name in train_resnet_conv_r:
+        wd_r = wd_r + calculate_wd_layers(model1, model2, name)
 
-def spe_lightweight_sequence_analysis(dataset_path, weight_path, output_path, mark):
-    list = np.array(sequence_analysis(dataset_path, weight_path))
-    plt.plot(range(len(list[:, 0])), list[:, 0], label='rpn_wd')
-    plt.plot(range(len(list[:, 1])), list[:, 1], label='conv_wd')
-    plt.plot(range(len(list[:, 2])), list[:, 2], label='dense_wd')
-    plt.plot(range(len(list[:, 3])), list[:, 3], label='norm_wd')
-    plt.legend()
-    plt.savefig(os.path.join(output_path, mark + 'div_wd.png'))
-    plt.close()
-    sum = list.sum(axis=1)
-    plt.plot(range(len(sum)), sum, label=mark + 'summary_wd')
-    plt.savefig(os.path.join(output_path, mark + 'summary_wd.png'))
-    plt.close()
-    save_data(list, os.path.join(output_path, mark + 'list.csv'))
+    final_wd = wd_rpn + wd_conv + wd_dense + wd_normal + wd_conv_array + wd_a + wd_b + wd_c + wd_r
+
+    return final_wd
 
 
 if __name__ == '__main__':
@@ -460,8 +449,7 @@ if __name__ == '__main__':
             current_model_path = os.path.join(model_path, model_i_fullname)
             current_model = load_weight(current_model_path, coco.CocoConfig())
 
-            wdr, wdc, wdd, wdn = calculate_wd_models_head(last_model, current_model)
-            current_wd = wdr + wdc + wdd + wdn
+            current_wd = calculate_wd_models_all(last_model, current_model)
             current_wd = round(current_wd, decimal_place)
             wd.append(current_wd)
             print('wd' + str(i) + ' is computed')
@@ -566,8 +554,7 @@ if __name__ == '__main__':
                                 epochs=eps,
                                 layers='all')
 
-            wdr, wdc, wdd, wdn = calculate_wd_models_head(last_model, current_model)
-            current_wd_prime = wdr + wdc + wdd + wdn
+            current_wd_prime = calculate_wd_models_all(last_model, current_model)
             current_wd_prime = round(current_wd_prime, decimal_place)
             wdp.append(current_wd_prime)
             print('wdp' + str(i) + ' is computed')
