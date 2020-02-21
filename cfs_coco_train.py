@@ -235,7 +235,7 @@ class CocoDataset(utils.Dataset):
             super(self.__class__, self).image_reference(image_id)
 
 
-def train(model, dataset, config):
+def train(model, dataset, config, eps):
     """ Train the model."""
     # Training dataset.
     dataset_train = CocoDataset()
@@ -290,7 +290,6 @@ def train(model, dataset, config):
     # Training - Stage 3
     # Fine tune all layers
     print("Fine tune all layers")
-    eps = 300
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
                 epochs=eps,
@@ -378,10 +377,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Mask R-CNN on custom MS COCO.')
     parser.add_argument('--model', required=True,
                         metavar="/path/to/weights.h5",
-                        help="Path to weights .h5 file or 'imagenet'")
+                        help="Path to weights .h5 file, 'imagenet', 'coco', or 'none'")
+    parser.add_argument("--totalEpochs", required=False,
+                        default=150,
+                        metavar="Total amount of epochs to train the model",
+                        help="Amount includes previous trained epochs (default is 150)",
+                        type=int)
     args = parser.parse_args()
 
     weight = args.model
+    epochs = args.totalEpochs
 
     # Configurations
     config = CocoConfig()
@@ -410,6 +415,6 @@ if __name__ == '__main__':
 
     # ******************************************* train coco
     dataset = './coco'
-    train(model, dataset, config)
+    train(model, dataset, config, epochs)
 
 print('Finish training.')
