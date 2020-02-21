@@ -321,13 +321,11 @@ if __name__ == '__main__':
     model_name = 'mask_rcnn_coco_'
     save_csv_dir = '../drive/My Drive/cfs_' + folder_name + '/compare_bf_af/'
     pathlib.Path(save_csv_dir).mkdir(parents=True, exist_ok=True)
-    save_wd_path = save_csv_dir + 'wd_first' + m_amount + '.csv'
-    temp_save_wd = save_csv_dir + 'wd_first' + m_amount + '_temp.csv'
+    save_wd_path = save_csv_dir + 'wd_first' + str(m_amount) + '.csv'
+    temp_save_wd = save_csv_dir + 'wd_first' + str(m_amount) + '_temp.csv'
     eps = 1
 
     model_path = os.path.join(DEFAULT_LOGS_DIR, folder_name)
-    config = coco.CocoConfig()
-    config.LEARNING_RATE = lr
 
     wd = []
     if start != 1:
@@ -357,7 +355,7 @@ if __name__ == '__main__':
         after_model_path = os.path.join(model_path, after_model_name)
         after_model = load_weight(after_model_path, coco.CocoConfig())
 
-        after_model.train(dataset_train, dataset_val, learning_rate=config.LEARNING_RATE, epochs=eps, layers='all')
+        after_model.train(dataset_train, dataset_val, learning_rate=lr, epochs=eps, layers='all')
 
         wd_between = calculate_wd_models_all(after_model, before_model)
         wd_between = round(wd_between, decimal_place)
