@@ -378,22 +378,28 @@ if __name__ == '__main__':
     parser.add_argument('--model', required=True,
                         metavar="/path/to/weights.h5",
                         help="Path to weights .h5 file, 'imagenet', 'coco', or 'none'")
-    parser.add_argument("--totalEpochs", required=False,
+    parser.add_argument('--totalEpochs', required=False,
                         default=150,
                         metavar="Total amount of epochs to train the model",
                         help="Amount includes previous trained epochs (default is 150)",
                         type=int)
+    parser.add_argument('--savedFolder', required=True,
+                        metavar="<folder name>",
+                        help="Folder name inside logs (config.DEFAULT_LOGS_DIR) for saving the trained models, "
+                             "e.g., coco20200221T2204")
     args = parser.parse_args()
 
     weight = args.model
     epochs = args.totalEpochs
+    saved_folder = args.savedFolder
 
     # Configurations
     config = CocoConfig()
     config.display()
 
     # Create model
-    model = modellib.MaskRCNN(mode="training", config=config, model_dir=config.DEFAULT_LOGS_DIR)
+    model_dir = os.path.join(config.DEFAULT_LOGS_DIR, saved_folder)
+    model = modellib.MaskRCNN(mode="training", config=config, model_dir=model_dir)
 
     # Load weights
     if weight == "imagenet":

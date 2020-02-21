@@ -10,6 +10,7 @@ import scipy.stats as ss
 from keras import backend as K
 import mrcnn.model as mlib
 import pathlib
+import glob
 
 #
 # mrcnn_class_logits
@@ -208,7 +209,7 @@ coco_classes = ['person', 'bicycle', 'car', 'motorcycle', 'airplane',
                 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
 
 DEFAULT_LOGS_DIR = coco.CocoConfig().DEFAULT_LOGS_DIR
-SAVE_MODEL_DIR = os.path.join(DEFAULT_LOGS_DIR, 'exp_generated')
+SAVE_MODEL_DIR = DEFAULT_LOGS_DIR
 
 
 def save_data(data, path):
@@ -226,12 +227,12 @@ def read_csv(path):
     return result
 
 
-def load_weight(path, config):
+def load_weight(path, passed_config, save_dir):
     # path to save model trained that will to be deleted
-    os.makedirs(SAVE_MODEL_DIR, exist_ok=True)
+    os.makedirs(save_dir, exist_ok=True)
 
     # Create model then load weight
-    model1 = mlib.MaskRCNN(mode="training", config=config, model_dir=SAVE_MODEL_DIR)
+    model1 = mlib.MaskRCNN(mode="training", config=passed_config, model_dir=save_dir)
 
     # changes made adding exclude arguments for samples mode when load and train
     # model1.load_weights(path, by_name=True, exclude=['mrcnn_class_logits', 'mrcnn_bbox_fc', 'mrcnn_bbox', 'mrcnn_mask'])
@@ -392,12 +393,17 @@ if __name__ == '__main__':
                         metavar="<m_amount>",
                         help="Amount of models in weights folder (e.g., 150 for m1 to m150) (default is 150)",
                         type=int)
+    parser.add_argument('--saveWeights', required=False,
+                        default='exp_generated',
+                        metavar="<folder name to save new weights>",
+                        help="Folder name in logs saving new weights (default is exp_generated)")
     args = parser.parse_args()
 
     mode = args.mode
     assert mode in ['original', 'samples']
     folder_name = args.dataPath
     m_amount = args.modelAmount
+    save_new_weights_dir = os.path.join(SAVE_MODEL_DIR, args.saveWeights)
 
     # variables
     decimal_place = 8
@@ -429,12 +435,12 @@ if __name__ == '__main__':
 
         # calculate wd
         for i in range(start, m_amount):
-            last_model = load_weight(last_model_path, coco.CocoConfig())
+            last_model = load_weight(last_model_path, coco.CocoConfig(), save_new_weights_dir)
 
             model_i = (str(i).zfill(4)) + '.h5'
             model_i_fullname = model_name + model_i
             current_model_path = os.path.join(model_path, model_i_fullname)
-            current_model = load_weight(current_model_path, coco.CocoConfig())
+            current_model = load_weight(current_model_path, coco.CocoConfig(), save_new_weights_dir)
 
             current_wd = calculate_wd_models_all(last_model, current_model)
             current_wd = round(current_wd, decimal_place)
@@ -450,6 +456,7 @@ if __name__ == '__main__':
         wd = np.asarray(wd, dtype=np.float64)
         np.savetxt(save_wd_path, wd, delimiter=',', fmt='%f')
         os.remove(temp_save_wd)
+        # shutil.rmtree(save_new_weights_dir, ignore_errors=True)
         print('The wasserstein distances are computed and saved.\n')
         # NOTE: wd[0] is the wd between m1 and end model (m150) ... wd[148] = wd between m149 and m150
 
@@ -529,12 +536,13 @@ if __name__ == '__main__':
 
         # calculate wdp and save wdp every 5 times
         for i in range(start, (m_amount + 1)):
-            last_model = load_weight(last_model_path, coco.CocoConfig())
+            save_new_weights_dir = os.path.join(save_new_weights_dir, str(i))
+            last_model = load_weight(last_model_path, coco.CocoConfig(), save_new_weights_dir)
 
             model_i = (str(i).zfill(4)) + '.h5'
             model_i_fullname = model_name + model_i
             current_model_path = os.path.join(model_path, model_i_fullname)
-            current_model = load_weight(current_model_path, coco.CocoConfig())
+            current_model = load_weight(current_model_path, coco.CocoConfig(), save_new_weights_dir)
             current_model.train(dataset_train, dataset_val,
                                 learning_rate=config.LEARNING_RATE,
                                 epochs=eps,
@@ -545,7 +553,7 @@ if __name__ == '__main__':
             wdp.append(current_wd_prime)
             print('wdp' + str(i) + ' is computed')
             K.clear_session()
-            shutil.rmtree(SAVE_MODEL_DIR, ignore_errors=True)
+            # shutil.rmtree(save_new_weights_dir, ignore_errors=True)
 
             if (i % 5 == 0) and (i != m_amount):
                 temp_wdp = np.asarray(wdp, dtype=np.float64)
@@ -556,6 +564,17 @@ if __name__ == '__main__':
         os.remove(temp_save_wdp)
         print('The wd prime of each model is calculated and saved.\n')
         # NOTE: wdp[0] is the wd between m1' and end model (m150) ... wdp[149] = wd between m150' and m150
+
+        # organize the new weights
+        os.makedirs(save_new_weights_dir, exist_ok=True)
+        for i in range(1, (m_amount + 1)):
+            current_save_w_dir = os.path.join(save_new_weights_dir, str(i))
+            for weight_file in glob.glob(current_save_w_dir + '/*.h5'):
+                dst = os.path.join(save_new_weights_dir, 'mask_rcnn_coco_{}.h5'.format((str(i).zfill(4))))
+                shutil.copy2(weight_file, dst)
+            shutil.rmtree(current_save_w_dir, ignore_errors=True)
+        print('The new weights from training', eps, 'epoch of every model in the baseline is saved in',
+              save_new_weights_dir)
 
         # vp
         load_wd_path = save_csv_dir + 'wd.csv'
