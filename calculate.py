@@ -8,7 +8,6 @@ import shutil
 import matplotlib.pyplot as plt
 import scipy.stats as ss
 from keras import backend as K
-from mrcnn.config import Config
 import mrcnn.model as mlib
 import pathlib
 
@@ -478,7 +477,6 @@ if __name__ == '__main__':
     # calculate wdp, vp with different samples
     elif mode == 'samples':
         start = int(input('Start or continue from which model for wdp? Enter: '))
-        lr = float(input('Enter the learning rate of models trained: '))
         set_num = input('Which experiment set number is this (1/2/3.1 to 3.2/4)? Enter: ')
 
         save_wdp_path = save_csv_dir + 'wdp' + set_num + '.csv'
@@ -496,7 +494,7 @@ if __name__ == '__main__':
         last_model_path = os.path.join(model_path, last_model_fullname)
 
         config = coco.CocoConfig()
-        config.LEARNING_RATE = lr
+
         coco_path = './coco'
         # choose data depending on set_num
         if set_num == '1':

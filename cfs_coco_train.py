@@ -235,7 +235,7 @@ class CocoDataset(utils.Dataset):
             super(self.__class__, self).image_reference(image_id)
 
 
-def train(model, dataset):
+def train(model, dataset, config):
     """ Train the model."""
     # Training dataset.
     dataset_train = CocoDataset()
@@ -410,6 +410,6 @@ if __name__ == '__main__':
 
     # ******************************************* train coco
     dataset = './coco'
-    train(model, dataset)
+    train(model, dataset, config)
 
 print('Finish training.')
