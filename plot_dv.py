@@ -13,18 +13,25 @@ def read_csv(path):
     return result
 
 
-filename = 'wd.csv'
-file_path = './cfs0215T1912_exps/' + filename
-v = (np.array(read_csv(file_path))).astype(float)
-plt.plot(v, label='wd')
+file_dir = './cfs0215T1912_interrupt_exps/'
+
+filename = 'wd_complete.csv'
+file_path = file_dir + filename
+wd = (np.array(read_csv(file_path))).astype(float)
+plt.plot(wd, label='wd_complete')
+
+filename = 'wdp31_temp_complete.csv'
+file_path = file_dir + filename
+wdp3_1 = (np.array(read_csv(file_path))).astype(float)
+plt.plot(wdp3_1, label='wdp3.1_temp_complete')
 
 # filename = 'v.csv'
-# file_path = './cfs0215T1912_exps/' + filename
+# file_path = file_dir + filename
 # v = (np.array(read_csv(file_path))).astype(float)
 # plt.plot(v, label='v')
 #
 # filename = 'vp3.1.csv'
-# file_path = './cfs0215T1912_exps/' + filename
+# file_path = file_dir + filename
 # vp = (np.array(read_csv(file_path))).astype(float)
 # vp_sum = np.sum(vp)
 # print('sum of vp:', vp_sum)
