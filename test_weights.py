@@ -99,6 +99,7 @@ elif eval_mode == 'full':
         start = int(input('Which model to continue computation (e.g., 20 mAPs saved, then 21)? Enter: '))
         previous_mAPs = np.asarray(read_csv(mAPs_file), dtype=np.float64)
         current_shape = start - 1
+        previous_mAPs = previous_mAPs[:current_shape]
         previous_mAPs = previous_mAPs.reshape(current_shape)
         output[:current_shape] = previous_mAPs
     else:
