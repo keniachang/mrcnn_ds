@@ -15,6 +15,11 @@ Sample Usage 7: python construct_small_dataset.py --mode=expand --dataPath=./coc
                 expand from: ./coco/train2017/
 Sample Usage 8: python construct_small_dataset.py --mode=expand --dataPath=./coco/expand/ --dataset=val2017 --size=200 --load=./new_annotations/val/filter_anns.csv --copyDir=./cocoDS/val2017/
                 expand from: ./coco/val2017/
+
+categories = ['bed']
+show_exception = False
+python construct_small_dataset.py --mode=small --dataPath=./coco/expand/bed/ --dataset=train2017 --size=600 --load=./coco/expand/train2017/subset_anns.csv --copyDir=./coco/expand/train2017/
+python construct_small_dataset.py --mode=small --dataPath=./coco/expand/bed/ --dataset=val2017 --size=200 --load=./coco/expand/val2017/subset_anns.csv --copyDir=./coco/expand/val2017/
 """
 
 from annotations_processing import read_csv, save_data, count_cat_data, categories
@@ -27,11 +32,11 @@ import skimage.io
 import numpy as np
 import cv2
 
-# # construct dataset for one category
-# categories = ['dog']
-# show_exception = False
+# construct dataset for one category
+categories = ['bed']
+show_exception = False
 
-show_exception = True
+# show_exception = True
 
 
 def check_data_dir(path, data_folder):
