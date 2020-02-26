@@ -6,6 +6,15 @@ Sample Usage 2: python construct_small_dataset.py --mode=small --dataPath=./coco
 Sample Usage 3: python construct_small_dataset.py --mode=small --dataPath=./coco/ --dataset=samples --size=30 --load=./coco/train2017/subset_anns.csv --copyDir=./coco/train2017/
 
 Sample Usage 4: python construct_small_dataset.py --mode=dark --dataPath=./coco/ --dataset=dark --load=./coco/samples/subset_anns.csv --copyDir=./coco/samples/
+
+Sample Usage 5: python construct_small_dataset.py --mode=small --dataPath=./coco/dog/ --dataset=train2017 --size=400 --load=./coco/train2017/subset_anns.csv --copyDir=./coco/train2017/
+Sample Usage 6: python construct_small_dataset.py --mode=small --dataPath=./coco/dog/ --dataset=val2017 --size=200 --load=./coco/val2017/subset_anns.csv --copyDir=./coco/val2017/
+For usages 5 & 6, include only the one category in categories and show_exception = False like the comments below
+
+Sample Usage 7: python construct_small_dataset.py --mode=expand --dataPath=./coco/expand/ --dataset=train2017 --size=600 --load=./new_annotations/train/filter_anns.csv --copyDir=./cocoDS/train2017/
+                expand from: ./coco/train2017/
+Sample Usage 8: python construct_small_dataset.py --mode=expand --dataPath=./coco/expand/ --dataset=val2017 --size=200 --load=./new_annotations/val/filter_anns.csv --copyDir=./cocoDS/val2017/
+                expand from: ./coco/val2017/
 """
 
 from annotations_processing import read_csv, save_data, count_cat_data, categories
@@ -19,7 +28,7 @@ import numpy as np
 import cv2
 
 # # construct dataset for one category
-# categories = ['bed']
+# categories = ['dog']
 # show_exception = False
 
 show_exception = True
@@ -30,12 +39,31 @@ def check_data_dir(path, data_folder):
     pathlib.Path(dataset_path).mkdir(parents=True, exist_ok=True)
 
 
-def construct_base_dataset(csv_file, classes, size, save_filenames_path, save_imgs_path, copy_imgs_from, save_csv):
+def construct_base_dataset(csv_file, classes, size, save_filenames_path, save_imgs_path, copy_imgs_from, save_csv,
+                           expand_from=None):
     # cat_size = round(size / len(classes)) + 1
     cat_size = round(size / len(classes))
     print('Each category will have', cat_size, 'annotations for this constructed dataset.')
     annotations = read_csv(csv_file)
-    print('Total amount of annotations is', (len(annotations) - 1), 'in specified annotation csv file.')
+    initial_length = len(annotations)  # including heading
+
+    # filter annotations to not include original data
+    if expand_from is not None:
+        original_images = glob.glob(expand_from + '*.jpg')
+        original_fns = []
+        for image_path in original_images:
+            bn = os.path.basename(image_path)
+            original_fns.append(bn)
+        del original_images
+
+        filtered_anns = [ann for ann in annotations if ann[0] not in original_fns]
+        annotations = filtered_anns
+        del filtered_anns
+        new_length = len(annotations)
+        print('Amount of annotations filtered is', (initial_length - new_length),
+              'and can construct another dataset from', (new_length - 1), 'annotations.')
+    else:
+        print('Total amount of annotations is', (initial_length - 1), 'in specified annotation csv file.')
 
     new_anns = [annotations[0]]
     filenames = []
@@ -114,7 +142,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Construct the dataset used for experiment.')
     parser.add_argument('--mode', required=True,
-                        metavar="<small|dark>",
+                        metavar="<small|dark|expand>",
                         help="Type of dataset to be constructed.")
     parser.add_argument('--dataPath', required=True,
                         metavar="path/to/folder/save/data/",
@@ -158,11 +186,13 @@ if __name__ == '__main__':
     print('Start process...')
     print('****************************************')
 
-    assert mode in ['small', 'dark']
+    assert mode in ['small', 'dark', 'expand']
     assert len(categories) > 0
     assert dataset_size >= len(categories)
     assert create_imgs in ['y', 'n']
     assert do_save in ['y', 'n']
+
+    check_data_dir(data_path, dataset)
 
     if create_imgs == 'y':
         imgs_path = data_path + dataset + '/'
@@ -178,14 +208,18 @@ if __name__ == '__main__':
         # val: 204 annotations, 137 imgaes
         # samples: 30 annotations, 19 images
 
-        check_data_dir(data_path, dataset)
         save_fns_path = data_path + dataset + '_images.csv'
         anns, fns = construct_base_dataset(load_path, categories, dataset_size, save_fns_path,
                                            imgs_path, copy_imgs_path, save_path)
     elif mode == 'dark':
         # dark
-        check_data_dir(data_path, dataset)
         construct_dark_dataset(load_path, imgs_path, copy_imgs_path, save_path)
+    elif mode == 'expand':
+        original_data_path = input('Enter the data path which is expanding from: ')
+        save_fns_path = data_path + dataset + '_images.csv'
+        anns, fns = construct_base_dataset(load_path, categories, dataset_size, save_fns_path,
+                                           imgs_path, copy_imgs_path, save_path, expand_from=original_data_path)
+
     else:
         print('Invalid mode!')
 
