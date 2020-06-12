@@ -7,3 +7,5 @@
 /*.csv
 /coco.py
 /losses_pics
+/PythonAPI/pycocotools/_mask.c
+/PythonAPI/pycocotools/_mask.cpython-37m-darwin.so
