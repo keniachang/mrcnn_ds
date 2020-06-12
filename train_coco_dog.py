@@ -148,6 +148,8 @@ class CocoDataset(utils.Dataset):
             # All images
             image_ids = list(coco.imgs.keys())
 
+        print('\nCOCO cat ids: ', class_ids, '\n')
+
         # Add classes
         for i in class_ids:
             self.add_class("coco", i, coco.loadCats(i)[0]["name"])
@@ -434,6 +436,11 @@ if __name__ == '__main__':
     parser.add_argument('--model', required=True,
                         metavar="/path/to/weights.h5",
                         help="Path to weights .h5 file or 'coco'")
+    parser.add_argument('--epochs', required=False,
+                        default=150,
+                        metavar="Total amount of epochs to train the model",
+                        help="Amount includes previous trained epochs (default is 150)",
+                        type=int)
     parser.add_argument('--limit', required=False,
                         default=500,
                         metavar="<image count>",
@@ -448,6 +455,7 @@ if __name__ == '__main__':
     print("Model: ", args.model)
     print("Dataset: ", args.dataset)
     print("Year: ", args.year)
+    print("Epochs: ", args.epochs)
     print("Auto Download: ", args.download)
 
     # Configurations
@@ -488,7 +496,8 @@ if __name__ == '__main__':
 
     # Load weights
     print("Loading weights ", model_path)
-    model.load_weights(model_path, by_name=True)
+    model.load_weights(model_path, by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                                                          "mrcnn_bbox", "mrcnn_mask"])
 
     # Train or evaluate
     if args.command == "train":
@@ -510,29 +519,29 @@ if __name__ == '__main__':
 
         # *** This training schedule is an example. Update to your needs ***
 
-        # Training - Stage 1
-        print("Training network heads")
-        model.train(dataset_train, dataset_val,
-                    learning_rate=config.LEARNING_RATE,
-                    epochs=40,
-                    layers='heads',
-                    augmentation=augmentation)
-
-        # Training - Stage 2
-        # Finetune layers from ResNet stage 4 and up
-        print("Fine tune Resnet stage 4 and up")
-        model.train(dataset_train, dataset_val,
-                    learning_rate=config.LEARNING_RATE,
-                    epochs=120,
-                    layers='4+',
-                    augmentation=augmentation)
+        # # Training - Stage 1
+        # print("Training network heads")
+        # model.train(dataset_train, dataset_val,
+        #             learning_rate=config.LEARNING_RATE,
+        #             epochs=40,
+        #             layers='heads',
+        #             augmentation=augmentation)
+        #
+        # # Training - Stage 2
+        # # Finetune layers from ResNet stage 4 and up
+        # print("Fine tune Resnet stage 4 and up")
+        # model.train(dataset_train, dataset_val,
+        #             learning_rate=config.LEARNING_RATE,
+        #             epochs=120,
+        #             layers='4+',
+        #             augmentation=augmentation)
 
         # Training - Stage 3
         # Fine tune all layers
         print("Fine tune all layers")
         model.train(dataset_train, dataset_val,
-                    learning_rate=config.LEARNING_RATE / 10,
-                    epochs=160,
+                    learning_rate=config.LEARNING_RATE,
+                    epochs=args.epochs,
                     layers='all',
                     augmentation=augmentation)
 
