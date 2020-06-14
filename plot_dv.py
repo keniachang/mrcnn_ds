@@ -13,17 +13,17 @@ def read_csv(path):
     return result
 
 
-file_dir = './cfs0215T1912_interrupt_exps/'
-
-filename = 'wd_complete.csv'
-file_path = file_dir + filename
-wd = (np.array(read_csv(file_path))).astype(float)
-plt.plot(wd, label='wd_complete')
-
-filename = 'wdp31_temp_complete.csv'
-file_path = file_dir + filename
-wdp3_1 = (np.array(read_csv(file_path))).astype(float)
-plt.plot(wdp3_1, label='wdp3.1_temp_complete')
+# file_dir = './cfs0215T1912_interrupt_exps/'
+#
+# filename = 'wd_complete.csv'
+# file_path = file_dir + filename
+# wd = (np.array(read_csv(file_path))).astype(float)
+# plt.plot(wd, label='wd_complete')
+#
+# filename = 'wdp31_temp_complete.csv'
+# file_path = file_dir + filename
+# wdp3_1 = (np.array(read_csv(file_path))).astype(float)
+# plt.plot(wdp3_1, label='wdp3.1_temp_complete')
 
 # filename = 'v.csv'
 # file_path = file_dir + filename
@@ -42,6 +42,13 @@ plt.plot(wdp3_1, label='wdp3.1_temp_complete')
 # dv_sum = np.sum(dv)
 # print('sum of dv_random:', dv_sum)
 # plt.plot(dv, label='delta velocity')
+
+file_dir = './coco_dog_ap/'
+
+filename = 'dog150_full_acc.csv'
+file_path = file_dir + filename
+wd = (np.array(read_csv(file_path))).astype(float)
+plt.plot(wd, label='dog_only_acc')
 
 plt.legend()
 plt.show()
