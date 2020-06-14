@@ -52,10 +52,12 @@ def loop_weight(path_ex_ep, ep):
     print("Loading weights ", weights_path)
     model.load_weights(weights_path, by_name=True)
 
-    # # an option to randomly select 30 image ids for testing
-    # image_ids = np.random.choice(dataset.image_ids, 30, replace=False, p=None)
+    # an option to randomly select 50 image ids for testing
+    image_ids = np.random.choice(dataset.image_ids, 50, replace=False, p=None)
+    APs = compute_batch_ap(image_ids)
 
-    APs = compute_batch_ap(dataset.image_ids)
+    # APs = compute_batch_ap(dataset.image_ids)
+
     print(APs)
     print("mAP @ IoU=50: ", np.mean(APs))
     return np.mean(APs)
