@@ -512,7 +512,7 @@ if __name__ == '__main__':
 
         # Validation dataset (class_ids=[18] to only val on dog category data)
         dataset_val = CocoDataset()
-        dataset_val.load_coco(args.dataset, "val", year=args.year, class_ids=[18], auto_download=args.download)
+        dataset_val.load_coco(args.dataset, "val", year=args.year, auto_download=args.download)
         dataset_val.prepare()
 
         # Image Augmentation
