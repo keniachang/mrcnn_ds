@@ -482,23 +482,28 @@ if __name__ == '__main__':
         model = modellib.MaskRCNN(mode="inference", config=config,
                                   model_dir=logs_dir)
 
-    # Select weights file to load
-    if args.model.lower() == "coco":
+    # Load weights
+    if args.model.lower() == "imagenet":
+        model_path = model.get_imagenet_weights()
+        print("Loading weights ", model_path)
+        model.load_weights(model_path, by_name=True, exclude=['mrcnn_class_logits', 'mrcnn_bbox_fc',
+                                                              'mrcnn_bbox', 'mrcnn_mask'])
+    elif args.model.lower() == "coco":
         model_path = COCO_MODEL_PATH
-        utils.download_trained_weights(model_path)
+        if not os.path.exists(model_path):
+            utils.download_trained_weights(model_path)
+        print("Loading weights ", model_path)
+        model.load_weights(model_path, by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                                                               "mrcnn_bbox", "mrcnn_mask"])
     elif args.model.lower() == "last":
         # Find last trained weights
         model_path = model.find_last()
-    elif args.model.lower() == "imagenet":
-        # Start from ImageNet trained weights
-        model_path = model.get_imagenet_weights()
+        print("Loading weights ", model_path)
+        model.load_weights(model_path, by_name=True)
     else:
         model_path = args.model
-
-    # Load weights
-    print("Loading weights ", model_path)
-    model.load_weights(model_path, by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
-                                                          "mrcnn_bbox", "mrcnn_mask"])
+        print("Loading weights ", model_path)
+        model.load_weights(model_path, by_name=True)
 
     # Train or evaluate
     if args.command == "train":

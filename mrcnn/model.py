@@ -2245,33 +2245,48 @@ class MaskRCNN():
         """
         # Set date and epoch counter as if starting a new model
         self.epoch = 0
-        now = datetime.datetime.now()
+        # now = datetime.datetime.now()
+        # # If we have a model path with date and epochs use them
+        # if model_path:
+        #     # Continue from we left of. Get epoch and date from the file name
+        #     # A sample model path might look like:
+        #     # \path\to\logs\coco20171029T2315\mask_rcnn_coco_0001.h5 (Windows)
+        #     # /path/to/logs/coco20171029T2315/mask_rcnn_coco_0001.h5 (Linux)
+        #     regex = r".*[/\\][\w-]+(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})[/\\]mask\_rcnn\_[\w-]+(\d{4})\.h5"
+        #     m = re.match(regex, model_path)
+        #     if m:
+        #         now = datetime.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)),
+        #                                 int(m.group(4)), int(m.group(5)))
+        #         # Epoch number in file is 1-based, and in Keras code it's 0-based.
+        #         # So, adjust for that then increment by one to start from the next epoch
+        #         self.epoch = int(m.group(6)) - 1 + 1
+        #         print('Re-starting from epoch %d' % self.epoch)
 
-        # If we have a model path with date and epochs use them
         if model_path:
-            # Continue from we left of. Get epoch and date from the file name
-            # A sample model path might look like:
-            # \path\to\logs\coco20171029T2315\mask_rcnn_coco_0001.h5 (Windows)
-            # /path/to/logs/coco20171029T2315/mask_rcnn_coco_0001.h5 (Linux)
-            regex = r".*[/\\][\w-]+(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})[/\\]mask\_rcnn\_[\w-]+(\d{4})\.h5"
-            m = re.match(regex, model_path)
-            if m:
-                now = datetime.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)),
-                                        int(m.group(4)), int(m.group(5)))
-                # Epoch number in file is 1-based, and in Keras code it's 0-based.
-                # So, adjust for that then increment by one to start from the next epoch
-                self.epoch = int(m.group(6)) - 1 + 1
+            # continue if starting from a previous trained model, e.g., 'dir/mask_rcnn_coco_0001.h5'
+            weight_file = os.path.basename(model_path)
+            weight_file = weight_file.split('.')[0]
+            weight_file = weight_file.split('_')
+            if weight_file[0] == 'mask' and weight_file[1] == 'rcnn' and weight_file[2] == self.config.NAME.lower()\
+                    and len(weight_file) == 4:
+                epoch_index = weight_file[-1]
+                while True:
+                    if epoch_index[0] == '0':
+                        epoch_index = epoch_index[1:]
+                    else:
+                        break
+                self.epoch = int(epoch_index)
                 print('Re-starting from epoch %d' % self.epoch)
+            else:
+                print('Starting from epoch %d' % self.epoch)
 
         # Directory for training logs
         # self.log_dir = os.path.join(self.model_dir, "{}{:%Y%m%dT%H%M}".format(self.config.NAME.lower(), now))
         self.log_dir = self.model_dir
 
         # Path to save after each epoch. Include placeholders that get filled by Keras.
-        self.checkpoint_path = os.path.join(self.log_dir, "mask_rcnn_{}_*epoch*.h5".format(
-            self.config.NAME.lower()))
-        self.checkpoint_path = self.checkpoint_path.replace(
-            "*epoch*", "{epoch:04d}")
+        self.checkpoint_path = os.path.join(self.log_dir, "mask_rcnn_{}_*epoch*.h5".format(self.config.NAME.lower()))
+        self.checkpoint_path = self.checkpoint_path.replace("*epoch*", "{epoch:04d}")
 
     def train(self, train_dataset, val_dataset, learning_rate, epochs, layers,
               augmentation=None, custom_callbacks=None, no_augmentation_sources=None):
