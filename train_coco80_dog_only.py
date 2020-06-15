@@ -103,7 +103,7 @@ class CocoConfig(Config):
 
     # TRAIN_ROIS_PER_IMAGE = 512
 
-    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_coco_B_weights/logs'
+    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_coco80_A_weights/logs'
 
 
 ############################################################
@@ -137,22 +137,19 @@ class CocoDataset(utils.Dataset):
             # All classes
             class_ids = sorted(coco.getCatIds())
 
-        # All images or a subset?
-        if class_ids:
-            image_ids = []
-            for id in class_ids:
-                image_ids.extend(list(coco.getImgIds(catIds=[id])))
-            # Remove duplicates
-            image_ids = list(set(image_ids))
-        else:
-            # All images
-            image_ids = list(coco.imgs.keys())
-
-        print('\nTotal amount of COCO cat ids: ', len(class_ids), '\n')
-
         # Add classes
         for i in class_ids:
             self.add_class("coco", i, coco.loadCats(i)[0]["name"])
+
+        # To train and infer on only selected category of COCO data, here is just dog category images
+        selected_class_id = [18]
+        image_ids = []
+        for cat_id in selected_class_id:
+            image_ids.extend(list(coco.getImgIds(catIds=[cat_id])))
+        # Remove duplicates
+        image_ids = list(set(image_ids))
+
+        # print('\nTotal amount of COCO cat ids: ', len(class_ids), '\n')
 
         # Add images
         for i in image_ids:
@@ -162,8 +159,7 @@ class CocoDataset(utils.Dataset):
                 path=coco.imgs[i]['coco_url'],
                 width=coco.imgs[i]["width"],
                 height=coco.imgs[i]["height"],
-                annotations=coco.loadAnns(coco.getAnnIds(
-                    imgIds=[i], catIds=class_ids, iscrowd=None)))
+                annotations=coco.loadAnns(coco.getAnnIds(imgIds=[i], catIds=selected_class_id, iscrowd=None)))
         if return_coco:
             return coco
 

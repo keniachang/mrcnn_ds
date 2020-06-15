@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from mrcnn import utils
 import mrcnn.model as modellib
-import train_coco_dog as train_coco
+import train_coco1_dog_only as train_coco
 from calculate import read_csv
 
 ROOT_DIR = os.path.abspath("./")
