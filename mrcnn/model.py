@@ -2732,6 +2732,9 @@ class MaskRCNN():
             log(k, v)
         return outputs_np
 
+    def get_weights(self):
+        return self.keras_model.get_weights()
+
 
 ############################################################
 #  Data Formatting
