@@ -70,8 +70,8 @@ class CocoValDog(utils.Dataset):
                 path=coco.imgs[img_id]['coco_url'],
                 width=coco.imgs[img_id]["width"],
                 height=coco.imgs[img_id]["height"],
-                annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=selected_class_id, iscrowd=None)))
-                # annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=class_ids, iscrowd=None)))
+                # annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=selected_class_id, iscrowd=None)))
+                annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=class_ids, iscrowd=None)))
         if return_coco:
             return coco
 
