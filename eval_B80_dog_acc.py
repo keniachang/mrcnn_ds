@@ -59,7 +59,7 @@ class CocoValDog(utils.Dataset):
         dog_id = 18
         dataset_size = 50
         image_ids = get_specified_category_image_ids(coco, dog_id, dataset_size)
-        selected_class_id = [dog_id]
+        selected_class_ids = [dog_id]
 
         # Add images
         for img_id in image_ids:
@@ -69,7 +69,7 @@ class CocoValDog(utils.Dataset):
                 path=coco.imgs[img_id]['coco_url'],
                 width=coco.imgs[img_id]["width"],
                 height=coco.imgs[img_id]["height"],
-                annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=selected_class_id, iscrowd=None)))
+                annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=selected_class_ids, iscrowd=None)))
                 # annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=class_ids, iscrowd=None)))
         if return_coco:
             return coco

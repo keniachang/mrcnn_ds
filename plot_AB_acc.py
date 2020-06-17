@@ -29,7 +29,12 @@ if __name__ == '__main__':
     filename = 'cocoB80_dog150_full_acc2.csv'
     file_path = file_dir + filename
     acc = (np.array(read_csv(file_path))).astype(float)
-    plt.plot(acc, label='B80_dog_acc')
+    plt.plot(acc, label='B80_dog_mix_acc')
+
+    filename = 'cocoB80_dog150_pure_full_acc2.csv'
+    file_path = file_dir + filename
+    acc = (np.array(read_csv(file_path))).astype(float)
+    plt.plot(acc, label='B80_dog_pure_acc')
 
     plt.legend()
     plt.show()
