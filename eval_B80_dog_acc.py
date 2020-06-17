@@ -8,6 +8,8 @@ from mrcnn import utils
 import mrcnn.model as modellib
 import train_coco80_all as train_coco
 from calculate import read_csv
+from extract_category_imgIds import get_specified_category_image_ids
+
 
 ROOT_DIR = os.path.abspath("./")
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -43,8 +45,6 @@ class CocoValDog(utils.Dataset):
         """
 
         coco = COCO("../drive/My Drive/{}/annotations/instances_{}{}.json".format(dataset_dir, subset, year))
-        if subset == "minival" or subset == "valminusminival":
-            subset = "val"
 
         # Load all classes or a subset?
         if not class_ids:
@@ -55,13 +55,12 @@ class CocoValDog(utils.Dataset):
         for cat_id in class_ids:
             self.add_class("coco", cat_id, coco.loadCats(cat_id)[0]["name"])
 
-        # only image ids of dog data
-        selected_class_id = [18]
-        image_ids = []
-        for cat_id in selected_class_id:
-            image_ids.extend(list(coco.getImgIds(catIds=[cat_id])))
-        # Remove duplicates
-        image_ids = list(set(image_ids))
+        # only use image ids of pure dog data
+        dog_id = 18
+        dataset_size = 50
+        image_ids = get_specified_category_image_ids(coco, dog_id, dataset_size)
+
+        selected_class_id = [dog_id]
 
         # Add images
         for img_id in image_ids:
@@ -71,8 +70,8 @@ class CocoValDog(utils.Dataset):
                 path=coco.imgs[img_id]['coco_url'],
                 width=coco.imgs[img_id]["width"],
                 height=coco.imgs[img_id]["height"],
-                # annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=selected_class_id, iscrowd=None)))
-                annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=class_ids, iscrowd=None)))
+                annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=selected_class_id, iscrowd=None)))
+                # annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=class_ids, iscrowd=None)))
         if return_coco:
             return coco
 
