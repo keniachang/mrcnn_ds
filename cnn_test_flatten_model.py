@@ -8,68 +8,93 @@ import dataReader as dr
 import random
 import KL_div as kl
 
+
 def sort_key(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*468+int(batch_str[0])
+    return int(epoch_str[0]) * 468 + int(batch_str[0])
+
+
 def sort_key_zero(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*46+int(batch_str[0])
+    return int(epoch_str[0]) * 46 + int(batch_str[0])
+
+
 def sort_key_one(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*52+int(batch_str[0])
+    return int(epoch_str[0]) * 52 + int(batch_str[0])
+
+
 def sort_key_two(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*46+int(batch_str[0])
+    return int(epoch_str[0]) * 46 + int(batch_str[0])
+
+
 def sort_key_three(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*47+int(batch_str[0])
+    return int(epoch_str[0]) * 47 + int(batch_str[0])
+
+
 def sort_key_four(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*45+int(batch_str[0])
+    return int(epoch_str[0]) * 45 + int(batch_str[0])
+
+
 def sort_key_five(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*42+int(batch_str[0])
+    return int(epoch_str[0]) * 42 + int(batch_str[0])
+
+
 def sort_key_six(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*46+int(batch_str[0])
+    return int(epoch_str[0]) * 46 + int(batch_str[0])
+
+
 def sort_key_seven(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*48+int(batch_str[0])
+    return int(epoch_str[0]) * 48 + int(batch_str[0])
+
+
 def sort_key_eight(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*45+int(batch_str[0])
+    return int(epoch_str[0]) * 45 + int(batch_str[0])
+
+
 def sort_key_nine(e):
     epoch_str = e.split('E')
     batch_str = epoch_str[1].split('b')
-    return int(epoch_str[0])*46+int(batch_str[0])
+    return int(epoch_str[0]) * 46 + int(batch_str[0])
+
 
 def sum_layer(array):
     length = 1
     shape = np.shape(array)
     for i in range(len(shape)):
-        length = length*shape[i]
+        length = length * shape[i]
     # print('length = ',length)
-    flat_array = np.reshape(array,[length,1])
-    return sum(flat_array)[0],length
+    flat_array = np.reshape(array, [length, 1])
+    return sum(flat_array)[0], length
+
+
 def resize_layer(layer_w):
     length = 1
     shape = np.shape(layer_w)
     for i in range(len(shape)):
-        length = length*shape[i]
+        length = length * shape[i]
     # print('length = ',length)
-    flat_array = np.reshape(layer_w,length)
+    flat_array = np.reshape(layer_w, length)
     # print(flat_array,dtype=float)
     return flat_array
+
 
 def resize_model(weights):
     output = []
@@ -77,30 +102,35 @@ def resize_model(weights):
     for w in weights:
         f_w = resize_layer(w)
         output.extend(f_w)
-        length = length+len(f_w)
+        length = length + len(f_w)
     # oa = np.array(output).flatten(order='C')
     oa = output
     return oa
-def draw_plot(list,name_list, xlabel = '', ylabel = '',title = '',fz = (8,4)):
+
+
+def draw_plot(list, name_list, xlabel='', ylabel='', title='', fz=(8, 4)):
     plt.figure(figsize=fz)
     for i in range(len(list)):
-        plt.plot(range(len(list[i])),list[i],label = name_list[i])
+        plt.plot(range(len(list[i])), list[i], label=name_list[i])
     plt.title(title)  # 标题
     plt.xlabel(xlabel)  # x轴的标签
     plt.ylabel(ylabel)  # y轴的标签
     plt.legend()
     plt.show()
-def normalize(array,ratio):
+
+
+def normalize(array, ratio):
     sumv = sum(array)
     ntarget = [a * ratio for a in array]
     ntarget = [a / sumv for a in ntarget]
     return ntarget
 
+
 def cosine_similarity(x, y, norm=False):
     """ 计算两个向量x和y的余弦相似度 """
     assert len(x) == len(y), "len(x) != len(y)"
 
-    if sum(x)==0 or sum(y) == 0:
+    if sum(x) == 0 or sum(y) == 0:
         return float(1) if x == y else float(0)
 
     # method 1
@@ -120,9 +150,12 @@ def cosine_similarity(x, y, norm=False):
 
     return 0.5 * cos + 0.5 if norm else cos  # 归一化到[0, 1]区间内
 
+
 def accuracy(model):
     score = model.evaluate(cm.x_test, cm.y_test, verbose=0)
     return score[0], score[1]
+
+
 def single_accuracy_test():
     file_address = input('enter output path:')
     file_ls = os.listdir(file_address)
@@ -140,7 +173,7 @@ def single_accuracy_test():
             continue
         cm.model.load_weights(file_address + '/' + file)
         print(file)
-        loss,ac = accuracy(cm.model)
+        loss, ac = accuracy(cm.model)
         print(file)
         losses.append(loss)
         accuracies.append(ac)
@@ -161,6 +194,7 @@ def single_accuracy_test():
     dr.save_data(accuracies, 'record/' + file_address + '/accuracy.csv')
     plt.savefig('record/' + file_address + '/accuracy.png')
     plt.close()
+
 
 def group_test(length):
     for i in range(length):
@@ -306,6 +340,7 @@ def group_test(length):
         plt.savefig('record/' + file_address + '/C_dis_dif_random.png')
         plt.close()
 
+
 def single_test():
     file_address = input('enter output path:')
     file_ls = os.listdir(file_address)
@@ -315,7 +350,7 @@ def single_test():
     # vm.vae.load_weights(output_path+'/0E0b.h5')
     # cm.model.load_weights(output_path+'/4E467b.h5') #end of normal
     # cm.model.load_weights(file_address + '/4E45b.h5')  # end of sample_selection
-    cm.model.load_weights(file_address+'/4E467b.h5') #end of normal
+    cm.model.load_weights(file_address + '/4E467b.h5')  # end of normal
 
     vmodel = cm.model.get_weights()
     RATIO = 100000
@@ -399,14 +434,15 @@ def single_test():
     plt.close()
 
 
-
-def multilabel_test(index,length):
-    file_address = 'multi_label'+ str(index)
+def multilabel_test(index, length):
+    file_address = 'multi_label' + str(index)
     file_ls = os.listdir(file_address)
+
     def sort_key_multi_label(e):
         epoch_str = e.split('E')
         batch_str = epoch_str[1].split('b')
         return int(epoch_str[0]) * length + int(batch_str[0])
+
     file_ls.sort(key=sort_key_multi_label)
     # file_ls.sort(key=sort_key)
 
@@ -414,7 +450,7 @@ def multilabel_test(index,length):
     # cm.model.load_weights(output_path+'/4E467b.h5') #end of normal
     # cm.model.load_weights(file_address + '/4E45b.h5')  # end of sample_selection
     # cm.model.load_weights(output_path+'/1E467b.h5') #end of normal
-    cm.model.load_weights(file_address + '/4E'+str(length-1)+'b.h5')
+    cm.model.load_weights(file_address + '/4E' + str(length - 1) + 'b.h5')
     vmodel = cm.model.get_weights()
     RATIO = 100000
     target = resize_model(vmodel)
@@ -496,12 +532,13 @@ def multilabel_test(index,length):
     plt.savefig('record/' + file_address + '/C_dis_dif_random.png')
     plt.close()
 
-def Euclidean_distance(array1,array2):
+
+def Euclidean_distance(array1, array2):
     return np.linalg.norm(array1 - array2, ord=2)
 
 
-def compare_two_sequence(path1,path2,metric,metric_name):
-    file_address = 'record/'+path1+'_'+path2
+def compare_two_sequence(path1, path2, metric, metric_name):
+    file_address = 'record/' + path1 + '_' + path2
 
     if not os.path.exists(file_address):  # 判断是否存在文件夹如果不存在则创建为文件夹
         os.makedirs(file_address)  # makedirs 创建文件时如果路径不存在会创建这个路径
@@ -523,20 +560,21 @@ def compare_two_sequence(path1,path2,metric,metric_name):
         extend = os.path.splitext(file)[-1][1:]
         if (extend != 'h5'):
             continue
-        print(path1 + '/' + file,'  ',path2 + '/' + file)
+        print(path1 + '/' + file, '  ', path2 + '/' + file)
 
         cm.model.load_weights(path1 + '/' + file)
         vcurrent1 = resize_model(cm.model.get_weights())
         cm.model.load_weights(path2 + '/' + file)
-        vcurrent3 =  resize_model(cm.model.get_weights())
+        vcurrent3 = resize_model(cm.model.get_weights())
 
-        dis = metric(np.array(vcurrent1),np.array(vcurrent3))
+        dis = metric(np.array(vcurrent1), np.array(vcurrent3))
         print(dis)
         distance.append(dis)
-    dr.save_data(distance,file_address+'/'+metric_name+'.csv')
+    dr.save_data(distance, file_address + '/' + metric_name + '.csv')
 
-def analyse_sequence(path1,target_path,metric,metric_name):
-    file_address = 'record/'+path1
+
+def analyse_sequence(path1, target_path, metric, metric_name):
+    file_address = 'record/' + path1
 
     if not os.path.exists(file_address):  # 判断是否存在文件夹如果不存在则创建为文件夹
         os.makedirs(file_address)  # makedirs 创建文件时如果路径不存在会创建这个路径
@@ -558,18 +596,17 @@ def analyse_sequence(path1,target_path,metric,metric_name):
         if (extend != 'h5'):
             continue
 
-
         cm.model.load_weights(path1 + '/' + file)
         vcurrent1 = resize_model(cm.model.get_weights())
 
-        dis = metric(vcurrent1,targetv)
+        dis = metric(vcurrent1, targetv)
         distance.append(dis)
         print(dis)
 
-    dr.save_data(distance,file_address+'/'+metric_name+'.csv')
+    dr.save_data(distance, file_address + '/' + metric_name + '.csv')
 
 
-def compare_two_sequence_accuracy(path1,path2):
+def compare_two_sequence_accuracy(path1, path2):
     file_address = 'record/' + path1 + '_' + path2
     os.makedirs(file_address)
     file_ls1 = os.listdir(path1)
@@ -604,6 +641,7 @@ def compare_two_sequence_accuracy(path1,path2):
     dr.save_data(loss_1, file_address + '/loss1.csv')
     dr.save_data(loss_2, file_address + '/loss2.csv')
 
+
 # group_test(10)
 # single_test()
 # multi = [[9,422]]
@@ -614,7 +652,7 @@ def compare_two_sequence_accuracy(path1,path2):
 
 # analyse_sequence('cnn_standard1','cnn_standard1/0E467b.h5',kl.KL_div,'KL_div')
 # a = list(range(60000))
-analyse_sequence('cnn_error_label','cnn_error_label/0E467b.h5',kl.KL_div,'KL_div')
+analyse_sequence('cnn_error_label', 'cnn_error_label/0E467b.h5', kl.KL_div, 'KL_div')
 # b = list(range(60000))
 # random.shuffle(a)
 # print(KL_div(np.transpose(a), np.transpose(b)))
