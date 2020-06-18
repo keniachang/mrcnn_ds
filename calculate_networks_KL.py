@@ -69,10 +69,10 @@ def resize_model(weights):
 
 
 def compare_two_weights(network_model, weight_path1, weight_path2, metric):
-    network_model.load_weights(weight_path1)
+    network_model.load_weights(weight_path1, by_name=True)
     v1 = resize_model(network_model.get_weights())
 
-    network_model.load_weights(weight_path2)
+    network_model.load_weights(weight_path2, by_name=True)
     v2 = resize_model(network_model.get_weights())
 
     dis = metric(v1, v2)
