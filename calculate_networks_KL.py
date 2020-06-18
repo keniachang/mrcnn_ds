@@ -10,6 +10,21 @@ import extend_network_to_array as ext_net_arr
 ROOT_DIR = os.path.abspath("./")
 sys.path.append(ROOT_DIR)  # To find local version of the library
 
+# MRCNN network head structure
+mrcnn_head = {
+    'train_rpn_model': ['rpn_model'],
+    'train_conv_layers': ['fpn_c5p5', 'fpn_c4p4', 'fpn_c3p3', 'fpn_c2p2', 'fpn_p5', 'fpn_p2', 'fpn_p3', 'fpn_p4'],
+    'train_dense_layers': ['mrcnn_mask_conv1', 'mrcnn_mask_conv2', 'mrcnn_mask_conv3', 'mrcnn_mask_conv4',
+                           'mrcnn_bbox_fc', 'mrcnn_mask_deconv', 'mrcnn_class_logits', 'mrcnn_mask'],
+    'train_normal_layers': ['mrcnn_mask_bn1', 'mrcnn_mask_bn2', 'mrcnn_mask_bn3', 'mrcnn_mask_bn4']
+}
+
+# train_rpn_model = 'rpn_model'
+# train_conv_layers = ['fpn_c5p5', 'fpn_c4p4', 'fpn_c3p3', 'fpn_c2p2', 'fpn_p5', 'fpn_p2', 'fpn_p3', 'fpn_p4']
+# train_dense_layers = ['mrcnn_mask_conv1', 'mrcnn_mask_conv2', 'mrcnn_mask_conv3', 'mrcnn_mask_conv4',
+#                       'mrcnn_bbox_fc', 'mrcnn_mask_deconv', 'mrcnn_class_logits', 'mrcnn_mask']
+# train_normal_layers = ['mrcnn_mask_bn1', 'mrcnn_mask_bn2', 'mrcnn_mask_bn3', 'mrcnn_mask_bn4']
+
 
 def softmax(a):
     ex_a = np.exp(a)
@@ -81,7 +96,33 @@ def compare_two_weights(network_model, weight_path1, weight_path2, metric):
     v2 = resize_model(network_model.get_weights())
 
     dis = metric(v1, v2)
+    return dis
 
+
+def compare_network_head_weights(network_model, weight_path1, weight_path2, metric, metric_name):
+    weight_paths = [weight_path1, weight_path2]
+    vs = []
+
+    for weight_path in weight_paths:
+        network_model.load_weights(weight_path, by_name=True)
+        v = []
+        for name, layers in mrcnn_head.items():
+            for layer_name in layers:
+                layer_weights = network_model.keras_model.get_layer(layer_name).get_weights()
+                flatten_layer = resize_layer(layer_weights)
+                v.extend(flatten_layer)
+
+        vs.append(v)
+
+    for v in vs:
+        v_array = np.asarray(v, dtype=np.float64)
+        print('Flatten network head:', len(v))
+        print('Min:', np.min(v_array))
+        print('Max:', np.max(v_array))
+        print()
+
+    print('Computing ', metric_name, 'on the two weights...')
+    dis = metric(vs[0], vs[1])
     return dis
 
 
@@ -178,7 +219,8 @@ if __name__ == '__main__':
         if str(os.path.dirname(weight1_path)) != str(os.path.dirname(weight2_path)):
             sys.exit('The two weights provided to calculate KL is not of the same model!')
 
-        kl_distance = compare_two_weights(model, weight1_path, weight2_path, KL_div)
+        # kl_distance = compare_two_weights(model, weight1_path, weight2_path, KL_div)
+        kl_distance = compare_network_head_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
         print(kl_distance)
 
         if save_output:
@@ -239,7 +281,8 @@ if __name__ == '__main__':
             epoch = str(index).zfill(4)
             current_weight_path = os.path.join(weights_dir, weights_prefix, '_{}.h5'.format(epoch))
 
-            kl_distance = compare_two_weights(model, current_weight_path, weight2_path, KL_div)
+            # kl_distance = compare_two_weights(model, current_weight_path, weight2_path, KL_div)
+            kl_distance = compare_network_head_weights(model, current_weight_path, weight2_path, KL_div, 'KL_div')
             kl_ds.append(kl_distance)
 
             if index % 5 == 0 and index + 1 != end:
