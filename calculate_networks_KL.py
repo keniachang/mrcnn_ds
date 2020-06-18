@@ -294,6 +294,11 @@ if __name__ == '__main__':
                                          "{}_w{}_w{}_KL.csv".format(network, out_start, index))
                 save_data((np.asarray(kl_ds, dtype=np.float64)), temp_path)
 
+                if index > 5:
+                    prev_temp = os.path.join(os.path.dirname(weights_dir),
+                                             "{}_w{}_w{}_KL.csv".format(network, out_start, (index - 5)))
+                    os.remove(prev_temp)
+
         output_path = os.path.join(os.path.dirname(weights_dir),
                                    "{}_w{}_w{}_KL.csv".format(network, out_start, weight2_index))
         save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
