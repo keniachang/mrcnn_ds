@@ -109,19 +109,18 @@ def compare_network_head_weights(network_model, weight_path1, weight_path2, metr
         for name, layers in mrcnn_head.items():
             for layer_name in layers:
                 layer_weights = network_model.keras_model.get_layer(layer_name).get_weights()
-                flatten_layer = resize_layer(layer_weights)
+                flatten_layer = resize_model(layer_weights)
                 v.extend(flatten_layer)
 
         vs.append(v)
 
     for v in vs:
-        v_array = np.asarray(v, dtype=np.float64)
         print('Flatten network head:', len(v))
-        print('Min:', np.min(v_array))
-        print('Max:', np.max(v_array))
+        print('Min:', np.min(v))
+        print('Max:', np.max(v))
         print()
 
-    print('Computing ', metric_name, 'on the two weights...')
+    print('Computing', metric_name, 'on the two weights...')
     dis = metric(vs[0], vs[1])
     return dis
 
@@ -221,7 +220,7 @@ if __name__ == '__main__':
 
         # kl_distance = compare_two_weights(model, weight1_path, weight2_path, KL_div)
         kl_distance = compare_network_head_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
-        print(kl_distance)
+        kl_ds = [kl_distance]
 
         if save_output:
             weights_dir = os.path.dirname(weight1_path)
@@ -233,7 +232,10 @@ if __name__ == '__main__':
 
             output_path = os.path.join(os.path.dirname(weights_dir),
                                        "{}_w{}_w{}_KL.csv".format(network, weight1_index, weight2_index))
-            save_data((np.asarray(kl_distance, dtype=np.float64)), output_path)
+            save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
+            print(str(weight1_index) + '-' + str(weight2_index) + ':', kl_distance)
+        else:
+            print(kl_distance)
 
     elif mode == '1mfsw':
         if str(os.path.dirname(weight1_path)) != str(os.path.dirname(weight2_path)):
@@ -247,6 +249,7 @@ if __name__ == '__main__':
 
         weights_dir = os.path.dirname(weight1_path)
         weights_prefix = '_'.join((weight1_filename.split('_'))[:-1])
+        weights_path_prefix = str(weights_dir) + '/' + weights_prefix
 
         while True:
             if weight1_index[0] == '0':
@@ -279,11 +282,12 @@ if __name__ == '__main__':
         temp_path = ''
         for index in range(start, end):
             epoch = str(index).zfill(4)
-            current_weight_path = os.path.join(weights_dir, weights_prefix, '_{}.h5'.format(epoch))
+            current_weight_path = weights_path_prefix + '_{}.h5'.format(epoch)
 
             # kl_distance = compare_two_weights(model, current_weight_path, weight2_path, KL_div)
             kl_distance = compare_network_head_weights(model, current_weight_path, weight2_path, KL_div, 'KL_div')
             kl_ds.append(kl_distance)
+            print(str(index) + '-' + str(weight2_index) + ':', kl_distance)
 
             if index % 5 == 0 and index + 1 != end:
                 temp_path = os.path.join(os.path.dirname(weights_dir),
