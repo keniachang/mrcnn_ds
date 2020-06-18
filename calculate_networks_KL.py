@@ -288,6 +288,7 @@ if __name__ == '__main__':
             kl_distance = compare_network_head_weights(model, current_weight_path, weight2_path, KL_div, 'KL_div')
             kl_ds.append(kl_distance)
             print(str(index) + '-' + str(weight2_index) + ':', kl_distance)
+            print('\n')
 
             if index % 5 == 0 and index + 1 != end:
                 temp_path = os.path.join(os.path.dirname(weights_dir),
