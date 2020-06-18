@@ -13,26 +13,31 @@ sys.path.append(ROOT_DIR)  # To find local version of the library
 
 def softmax(a):
     ex_a = np.exp(a)
+    # print('Sum of np.exp(a) or ex_a:', sum(ex_a))
     return ex_a / sum(ex_a)
 
 
 def rel_entr(a, b):
-    array_a = np.array(a)
-    array_b = np.array(b)
+    array_a = np.array(a, dtype=np.float64)
+    array_b = np.array(b, dtype=np.float64)
+    # print(array_a)
+    # print(array_b)
     v = array_a / array_b
     lg = np.log(v)
     return array_a * lg
 
 
 def entropy(pk, qk=None, base=None, axis=0):
-    pk = np.array(pk)
+    pk = np.array(pk, dtype=np.float64)
+    # print('Softmax of pk')
     pk = softmax(pk)
     if qk is None:
         vec = ss.entr(pk)
     else:
-        qk = np.array(qk)
+        qk = np.array(qk, dtype=np.float64)
         if qk.shape != pk.shape:
             raise ValueError("qk and pk must have same shape.")
+        # print('Softmax of qk')
         qk = softmax(qk)
         vec = rel_entr(pk, qk)
     S = np.sum(vec, axis=axis)
@@ -186,7 +191,7 @@ if __name__ == '__main__':
 
             output_path = os.path.join(os.path.dirname(weights_dir),
                                        "{}_w{}_w{}_KL.csv".format(network, weight1_index, weight2_index))
-            save_data(kl_distance, output_path)
+            save_data((np.asarray(kl_distance, dtype=np.float64)), output_path)
 
     elif mode == '1mfsw':
         if str(os.path.dirname(weight1_path)) != str(os.path.dirname(weight2_path)):
@@ -240,11 +245,11 @@ if __name__ == '__main__':
             if index % 5 == 0 and index + 1 != end:
                 temp_path = os.path.join(os.path.dirname(weights_dir),
                                          "{}_w{}_w{}_KL.csv".format(network, out_start, index))
-                save_data(kl_ds, temp_path)
+                save_data((np.asarray(kl_ds, dtype=np.float64)), temp_path)
 
         output_path = os.path.join(os.path.dirname(weights_dir),
                                    "{}_w{}_w{}_KL.csv".format(network, out_start, weight2_index))
-        save_data(kl_ds, output_path)
+        save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
         os.remove(temp_path)
 
     else:
