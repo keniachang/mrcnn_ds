@@ -6,7 +6,7 @@ from PythonAPI.pycocotools.coco import COCO
 from PythonAPI.pycocotools import mask as maskUtils
 from mrcnn import utils
 import mrcnn.model as modellib
-import train_coco80_all as train_coco
+import train_coco80_three as train_coco
 from calculate import read_csv
 from extract_category_imgIds import get_specified_category_image_ids
 
