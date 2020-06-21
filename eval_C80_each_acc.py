@@ -56,7 +56,7 @@ class CocoValDog(utils.Dataset):
             self.add_class("coco", cat_id, coco.loadCats(cat_id)[0]["name"])
 
         # only use image ids of pure single category data
-        selected_cat_id0 = 3
+        selected_cat_id0 = 61
         dataset_size = 50
         image_ids = get_specified_category_image_ids(coco, selected_cat_id0, dataset_size)
 
