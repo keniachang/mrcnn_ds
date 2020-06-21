@@ -6,7 +6,7 @@ Retrieve the dataset's image ids from the COCO val 2014 dataset
 from PythonAPI.pycocotools.coco import COCO
 
 
-def get_specified_category_image_ids(coco, cat_id, size=50):
+def get_specified_category_image_ids(coco, cat_id, size=None):
     image_ids = list(coco.getImgIds(catIds=[cat_id]))
     image_ids = list(set(image_ids))
 
