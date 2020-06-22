@@ -56,10 +56,16 @@ class CocoValDog(utils.Dataset):
             self.add_class("coco", cat_id, coco.loadCats(cat_id)[0]["name"])
 
         # only use image ids of pure dog data
-        dog_id = 18
-        dataset_size = 50
-        image_ids = get_specified_category_image_ids(coco, dog_id, dataset_size)
-        selected_class_ids = [dog_id]
+        # selected_cat_id0 = 18
+        # dataset_size = 50
+        # image_ids = get_specified_category_image_ids(coco, selected_cat_id0, dataset_size)
+
+        # test accuracies on all pure dog images in val2014 dataset
+        selected_cat_id0 = 18
+        image_ids = get_specified_category_image_ids(coco, selected_cat_id0)
+        print('Size of pure dataset:', len(image_ids))
+
+        selected_class_ids = [selected_cat_id0]
 
         # Add images
         for img_id in image_ids:
