@@ -245,6 +245,9 @@ if __name__ == '__main__':
         m_amount = int(input('Enter the last model number (e.g., 150 for m150):'))
         end = 1 + m_amount
 
+        # save output every n time
+        save_interval = int(input('Enter interval for saving during evaluation:'))
+
         # output array
         output = np.zeros(m_amount)
 
@@ -266,7 +269,7 @@ if __name__ == '__main__':
             output[i] = loop_weight(w_path, index)
             i += 1
 
-            if (index % 5 == 0) and (index + 1 != end):
+            if (index % save_interval == 0) and (index + 1 != end):
                 save_data(output, temp_path)
 
         save_data(output, output_path)
