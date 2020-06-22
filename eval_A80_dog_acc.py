@@ -45,6 +45,7 @@ class CocoValDog(utils.Dataset):
         """
 
         coco = COCO("../drive/My Drive/{}/annotations/instances_{}{}.json".format(dataset_dir, subset, year))
+        image_dir = './coco_val2014_pure_dog_images'
 
         # Load all classes or a subset?
         if not class_ids:
@@ -66,8 +67,8 @@ class CocoValDog(utils.Dataset):
         for img_id in image_ids:
             self.add_image(
                 "coco", image_id=img_id,
-                # path=os.path.join(image_dir, coco.imgs[img_id]['file_name']),
-                path=coco.imgs[img_id]['coco_url'],
+                path=os.path.join(image_dir, coco.imgs[img_id]['file_name']),
+                # path=coco.imgs[img_id]['coco_url'],
                 width=coco.imgs[img_id]["width"],
                 height=coco.imgs[img_id]["height"],
                 annotations=coco.loadAnns(coco.getAnnIds(imgIds=[img_id], catIds=selected_class_ids, iscrowd=None)))
