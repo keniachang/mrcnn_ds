@@ -5,6 +5,7 @@ import mrcnn.model as modellib
 import train_coco1_dog_only as train_coco1_dog
 import train_coco80_all as train_coco80_all
 import train_coco80_dog_only as train_coco80_dog
+import train_coco80_three
 
 ROOT_DIR = os.path.abspath("./")
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -12,9 +13,11 @@ sys.path.append(ROOT_DIR)  # To find local version of the library
 coco_config1 = train_coco1_dog.CocoConfig()
 coco_config80B = train_coco80_all.CocoConfig()
 coco_config80A = train_coco80_dog.CocoConfig()
+coco_config80C = train_coco80_three.CocoConfig()
 MODEL_DIR1 = os.path.join(ROOT_DIR, "logs1")
 MODEL_DIR80B = os.path.join(ROOT_DIR, "logs80")
 MODEL_DIR80A = os.path.join(ROOT_DIR, "Alogs80")
+MODEL_DIR80C = os.path.join(ROOT_DIR, "Clogs80")
 
 
 class InferenceConfig1(coco_config1.__class__):
@@ -30,6 +33,12 @@ class InferenceConfig80B(coco_config80B.__class__):
 
 
 class InferenceConfig80A(coco_config80A.__class__):
+    # Run detection on one image at a time
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 1
+
+
+class InferenceConfig80C(coco_config80C.__class__):
     # Run detection on one image at a time
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1

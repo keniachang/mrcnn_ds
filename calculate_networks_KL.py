@@ -170,7 +170,7 @@ if __name__ == '__main__':
                         metavar="<command>",
                         help="'1m2w' or '1mfsw'")
     parser.add_argument('--network', required=True,
-                        metavar="<A80|B80>",
+                        metavar="<A80|B80|C80>",
                         help="Network type")
     parser.add_argument('--path1', required=True,
                         metavar="/path/to/first/weights",
@@ -209,6 +209,9 @@ if __name__ == '__main__':
     elif network == 'B80':
         config = ext_net_arr.InferenceConfig80B()
         model_dir = ext_net_arr.MODEL_DIR80B
+    elif network == 'C80':
+        config = ext_net_arr.InferenceConfig80C()
+        model_dir = ext_net_arr.MODEL_DIR80C
     else:
         sys.exit('Unsupported network!')
 
