@@ -35,7 +35,7 @@ assert 0 < network_label_num < 81
 subset_size = 500
 epochs_per_label = 10
 images_per_weight = subset_size / epochs_per_label
-initial_weight_path = 'drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'
+initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'
 must_have_label = 'dog'
 network_labels = []
 if network_label_num == 1:
