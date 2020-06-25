@@ -10,11 +10,10 @@ Written by Waleed Abdulla
 import os
 import sys
 import numpy as np
+import math
 from PythonAPI.pycocotools.coco import COCO
 from PythonAPI.pycocotools import mask as maskUtils
 from find_catID import coco_categories
-from coco_label_imageIds import get_label_image_ids_file_path as get_label_path
-from coco_label_imageIds import save_label_image_ids, read_label_image_ids
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./")
@@ -32,9 +31,9 @@ network_label_num = int(input('Enter number of label this network will be traine
 assert 0 < network_label_num < 81
 
 # Constants
-subset_size = 100
+label_size = 500
 epochs_per_label = 10
-images_per_weight = subset_size / epochs_per_label
+images_per_weight = label_size / epochs_per_label
 initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'
 must_have_label = 'dog'
 network_labels = []
@@ -67,7 +66,7 @@ class CocoConfig(Config):
     # Number of training steps per epoch
     STEPS_PER_EPOCH = images_per_weight
 
-    VALIDATION_STEPS = 5
+    VALIDATION_STEPS = 20
 
     # Adjust learning rate if needed
     LEARNING_RATE = 0.0001
@@ -79,8 +78,8 @@ class CocoConfig(Config):
 
 
 class CocoDataset(utils.Dataset):
-    def load_coco(self, dataset_dir, subset, selected_cat_name, year=DEFAULT_DATASET_YEAR, images_start=None,
-                  class_ids=None, return_coco=False):
+    def load_coco(self, dataset_dir, subset, network_cats, year=DEFAULT_DATASET_YEAR,
+                  class_ids=None, return_subset_size=False):
         """Load a subset of the COCO dataset."""
 
         coco = COCO("../drive/My Drive/{}/annotations/instances_{}{}.json".format(dataset_dir, subset, year))
@@ -94,32 +93,24 @@ class CocoDataset(utils.Dataset):
         for i in class_ids:
             self.add_class("coco", i, coco.loadCats(i)[0]["name"])
 
-        selected_class_id = coco.getCatIds(catNms=[selected_cat_name])
-
+        selected_class_ids = coco.getCatIds(catNms=network_cats)
+        image_ids = []
         if subset == 'train':
-            label_img_ids_path = get_label_path(selected_cat_name, subset_size)
-            if not os.path.exists(label_img_ids_path):
-                image_ids = save_label_image_ids(coco, selected_class_id, subset_size, label_img_ids_path)
-            else:
-                image_ids = read_label_image_ids(label_img_ids_path)
+            for cat_id in selected_class_ids:
+                cat_img_ids = list(coco.getImgIds(catIds=[cat_id]))
+                cat_img_ids = list(set(cat_img_ids))
+                if len(cat_img_ids) < label_size:
+                    image_ids.extend(cat_img_ids)
+                else:
+                    cat_img_ids = cat_img_ids[:label_size]
+                    image_ids.extend(cat_img_ids)
         else:
-            image_ids = []
-            image_ids.extend(list(coco.getImgIds(catIds=selected_class_id)))
-            # Remove duplicates
-            image_ids = list(set(image_ids))
+            for cat_id in selected_class_ids:
+                image_ids.extend(list(coco.getImgIds(catIds=[cat_id])))
+        # Remove duplicates
+        image_ids = list(set(image_ids))
 
         print(subset, 'size:', len(image_ids))
-
-        if images_start:
-            images_end = images_start + images_per_weight
-            if images_end > len(image_ids):
-                image_ids = image_ids[images_start:]
-                print('Image batch:', images_start, '- rest; size:', len(image_ids))
-                print(image_ids)
-            else:
-                image_ids = image_ids[images_start:images_end]
-                print('Image batch:', images_start, '-', images_end, '; size:', len(image_ids))
-                print(image_ids)
 
         # Add images
         for i in image_ids:
@@ -129,9 +120,9 @@ class CocoDataset(utils.Dataset):
                 path=coco.imgs[i]['coco_url'],
                 width=coco.imgs[i]["width"],
                 height=coco.imgs[i]["height"],
-                annotations=coco.loadAnns(coco.getAnnIds(imgIds=[i], catIds=selected_class_id, iscrowd=None)))
-        if return_coco:
-            return coco
+                annotations=coco.loadAnns(coco.getAnnIds(imgIds=[i], catIds=selected_class_ids, iscrowd=None)))
+        if return_subset_size:
+            return len(image_ids)
 
     def load_mask(self, image_id):
         """Load instance masks for the given image.
@@ -234,63 +225,26 @@ if __name__ == '__main__':
     # Create model
     model = modellib.MaskRCNN(mode="training", config=config, model_dir=logs_dir)
 
-    # Train epochs_per_label (10) for each label
-    for i, category in enumerate(network_labels):
-        if i == 0:
-            model_path = initial_weight_path
-        else:
-            model_index = i * epochs_per_label
-            model_index = str(model_index).zfill(4)
-            model_path = logs_dir + '/' + 'mask_rcnn_' + config.NAME.lower() + '_{}.h5'.format(model_index)
+    # Load weights
+    print("Loading weights ", initial_weight_path)
+    model.load_weights(initial_weight_path, by_name=True)
 
-        # Load weights
-        print("Loading weights ", model_path)
-        model.load_weights(model_path, by_name=True)
+    # Training dataset
+    dataset_train = CocoDataset()
+    train_subset_size = dataset_train.load_coco(dataset, "train", network_labels, return_subset_size=True)
+    dataset_train.prepare()
 
-        # Training dataset
-        dataset_train = CocoDataset()
-        dataset_train.load_coco(dataset, "train", category)
-        dataset_train.prepare()
+    # Validation dataset
+    dataset_val = CocoDataset()
+    dataset_val.load_coco(dataset, "val", network_labels)
+    dataset_val.prepare()
 
-        # Validation dataset
-        dataset_val = CocoDataset()
-        dataset_val.load_coco(dataset, "val", category)
-        dataset_val.prepare()
+    # Training: fine tune all layers
+    total_epochs = int(math.ceil(train_subset_size / images_per_weight))
+    print('Training on', network_label_num, 'coco label data')
+    model.train(dataset_train, dataset_val,
+                learning_rate=config.LEARNING_RATE,
+                epochs=total_epochs,
+                layers='all')
 
-        # Training: fine tune all layers
-        print('Training on', category, 'data')
-        model.train(dataset_train, dataset_val,
-                    learning_rate=config.LEARNING_RATE, epochs=epochs_per_label, layers='all')
-
-    # # Train epochs_per_label (10) for each label
-    # for i, category in enumerate(network_labels):
-    #     for epoch in range(epochs_per_label):
-    #         if i == 0 and epoch == 0:
-    #             model_path = initial_weight_path
-    #         else:
-    #             model_index = i * epochs_per_label
-    #             model_index = model_index + epoch
-    #             model_index = str(model_index).zfill(4)
-    #             model_path = logs_dir + '/' + 'mask_rcnn_' + config.NAME.lower() + '_{}.h5'.format(model_index)
-    #
-    #         # Load weights
-    #         print("Loading weights ", model_path)
-    #         model.load_weights(model_path, by_name=True)
-    #
-    #         images_batch_start = epoch * images_per_weight
-    #
-    #         # Training dataset
-    #         dataset_train = CocoDataset()
-    #         dataset_train.load_coco(dataset, "train", category, images_start=images_batch_start)
-    #         dataset_train.prepare()
-    #
-    #         # Validation dataset
-    #         dataset_val = CocoDataset()
-    #         dataset_val.load_coco(dataset, "val", category)
-    #         dataset_val.prepare()
-    #
-    #         # Training: fine tune all layers
-    #         print('Training on', category, 'data')
-    #         model.train(dataset_train, dataset_val, learning_rate=config.LEARNING_RATE, epochs=1, layers='all')
-
-print('Finish process.')
+    print('Finish process.')

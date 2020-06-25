@@ -5,7 +5,7 @@ from PythonAPI.pycocotools.coco import COCO
 
 def save_label_image_ids(coco, cat_id, size, save_path):
     image_ids = []
-    image_ids.extend(list(coco.getImgIds(catIds=cat_id)))
+    image_ids.extend(list(coco.getImgIds(catIds=[cat_id])))
     image_ids = list(set(image_ids))
 
     if len(image_ids) >= size:

@@ -1694,8 +1694,6 @@ class DataGenerator(keras.utils.Sequence):
         self.detection_targets = detection_targets
         self.no_augmentation_sources = no_augmentation_sources or []
 
-        self.image_i = 0
-
     def __len__(self):
         return int(np.ceil(len(self.image_ids) / float(self.batch_size)))
 
@@ -1705,15 +1703,10 @@ class DataGenerator(keras.utils.Sequence):
     def data_generator(self, image_ids):
         b = 0
 
-        # while b < self.batch_size and b < image_ids.shape[0]:     # # use this if batch_size != 1
         while b < self.batch_size:
             try:
                 # Get GT bounding boxes and masks for image.
                 image_id = image_ids[b]
-
-                if len(self.image_ids) == 100:
-                    self.image_i += 1
-                    print('Current image', self.image_i, ':', image_id)
 
                 # If the image source is not to be augmented pass None as augmentation
                 if self.dataset.image_info[image_id]['source'] in self.no_augmentation_sources:
