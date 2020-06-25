@@ -106,6 +106,8 @@ class CocoDataset(utils.Dataset):
             # Remove duplicates
             image_ids = list(set(image_ids))
 
+        print(subset, 'size:', len(image_ids))
+
         # Add images
         for i in image_ids:
             self.add_image(

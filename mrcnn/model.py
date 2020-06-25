@@ -1673,7 +1673,6 @@ def data_generator(dataset, config, shuffle=True, augment=False, augmentation=No
     b = 0  # batch item index
     image_index = -1
     image_ids = np.copy(dataset.image_ids)
-    print('Data generator image_ids:', image_ids)
     error_count = 0
     no_augmentation_sources = no_augmentation_sources or []
 
@@ -1696,7 +1695,9 @@ def data_generator(dataset, config, shuffle=True, augment=False, augmentation=No
 
             # Get GT bounding boxes and masks for image.
             image_id = image_ids[image_index]
-            print('Current image:', image_id, '\n')
+
+            if len(image_ids) == 500:
+                print('Current image:', image_id, '\n')
 
             # If the image source is not to be augmented pass None as augmentation
             if dataset.image_info[image_id]['source'] in no_augmentation_sources:
