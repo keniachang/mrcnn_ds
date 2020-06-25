@@ -22,15 +22,29 @@ def read_label_image_ids(path):
     with open(path, "r") as read_file:
         reader = csv.reader(read_file)
         for image_id in reader:
-            image_ids.append(int(image_id))
+            image_id = int(image_id[0])
+            image_ids.append(image_id)
 
     return image_ids
 
 
-def get_label_image_ids_file_path(label, size, file_dir='./networks_labels_imgIds'):
+def get_label_image_ids_file_path(label, size, file_dir='./networks_labels_imgIds/'):
     file_path = file_dir + 'coco_' + label + str(size) + 'imgIds.csv'
     return file_path
 
 
 if __name__ == '__main__':
-    pass
+    coco_label = 'dog'
+    label_size = 500
+    coco = COCO('./cocoDS/annotations/instances_train2014.json')
+
+    class_id = coco.getCatIds(catNms=[coco_label])
+    dog_path = get_label_image_ids_file_path(coco_label, label_size)
+    img_ids = save_label_image_ids(coco, class_id, label_size, dog_path)
+    print(len(img_ids))
+
+    read_img_ids = read_label_image_ids(dog_path)
+    print(len(read_img_ids))
+
+    if img_ids == read_img_ids:
+        print('Same')
