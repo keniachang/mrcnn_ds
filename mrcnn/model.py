@@ -1704,20 +1704,22 @@ class DataGenerator(keras.utils.Sequence):
         b = 0
 
         # while b < self.batch_size and b < image_ids.shape[0]:     # # use this if batch_size != 1
+        image_i = 0
         while b < self.batch_size:
             try:
                 # Get GT bounding boxes and masks for image.
                 image_id = image_ids[b]
 
                 if len(self.image_ids) == 500:
-                    print(image_id)
+                    image_i += 1
+                    print('Current image', image_i, ':', image_id)
 
                 # If the image source is not to be augmented pass None as augmentation
                 if self.dataset.image_info[image_id]['source'] in self.no_augmentation_sources:
                     image, image_meta, gt_class_ids, gt_boxes, gt_masks = \
-                    load_image_gt(self.dataset, self.config, image_id, augment=self.augment,
-                                  augmentation=None,
-                                  use_mini_mask=self.config.USE_MINI_MASK)
+                        load_image_gt(self.dataset, self.config, image_id, augment=self.augment,
+                                      augmentation=None,
+                                      use_mini_mask=self.config.USE_MINI_MASK)
                 else:
                     image, image_meta, gt_class_ids, gt_boxes, gt_masks = \
                         load_image_gt(self.dataset, self.config, image_id, augment=self.augment,
