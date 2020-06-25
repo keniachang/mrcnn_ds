@@ -245,21 +245,50 @@ if __name__ == '__main__':
         print("Loading weights ", model_path)
         model.load_weights(model_path, by_name=True)
 
-        for epoch in range(epochs_per_label):
-            images_batch_start = epoch * images_per_weight
+        # Training dataset
+        dataset_train = CocoDataset()
+        dataset_train.load_coco(dataset, "train", category)
+        dataset_train.prepare()
 
-            # Training dataset
-            dataset_train = CocoDataset()
-            dataset_train.load_coco(dataset, "train", category, images_start=images_batch_start)
-            dataset_train.prepare()
+        # Validation dataset
+        dataset_val = CocoDataset()
+        dataset_val.load_coco(dataset, "val", category)
+        dataset_val.prepare()
 
-            # Validation dataset
-            dataset_val = CocoDataset()
-            dataset_val.load_coco(dataset, "val", category)
-            dataset_val.prepare()
+        # Training: fine tune all layers
+        print('Training on', category, 'data')
+        model.train(dataset_train, dataset_val,
+                    learning_rate=config.LEARNING_RATE, epochs=epochs_per_label, layers='all')
 
-            # Training: fine tune all layers
-            print('Training on', category, 'data')
-            model.train(dataset_train, dataset_val, learning_rate=config.LEARNING_RATE, epochs=1, layers='all')
+    # # Train epochs_per_label (10) for each label
+    # for i, category in enumerate(network_labels):
+    #     for epoch in range(epochs_per_label):
+    #         if i == 0 and epoch == 0:
+    #             model_path = initial_weight_path
+    #         else:
+    #             model_index = i * epochs_per_label
+    #             model_index = model_index + epoch
+    #             model_index = str(model_index).zfill(4)
+    #             model_path = logs_dir + '/' + 'mask_rcnn_' + config.NAME.lower() + '_{}.h5'.format(model_index)
+    #
+    #         # Load weights
+    #         print("Loading weights ", model_path)
+    #         model.load_weights(model_path, by_name=True)
+    #
+    #         images_batch_start = epoch * images_per_weight
+    #
+    #         # Training dataset
+    #         dataset_train = CocoDataset()
+    #         dataset_train.load_coco(dataset, "train", category, images_start=images_batch_start)
+    #         dataset_train.prepare()
+    #
+    #         # Validation dataset
+    #         dataset_val = CocoDataset()
+    #         dataset_val.load_coco(dataset, "val", category)
+    #         dataset_val.prepare()
+    #
+    #         # Training: fine tune all layers
+    #         print('Training on', category, 'data')
+    #         model.train(dataset_train, dataset_val, learning_rate=config.LEARNING_RATE, epochs=1, layers='all')
 
 print('Finish process.')
