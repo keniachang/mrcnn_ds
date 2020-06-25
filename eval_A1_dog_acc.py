@@ -104,7 +104,7 @@ elif eval_mode == 'full':
     temp_path = os.path.join(output_dir, temp_filename)
 
     # know when to end
-    m_amount = int(input('Enter the last model number (e.g., 150 for m150):'))
+    m_amount = int(input('Enter the last model number (e.g., 150 for m150): '))
     end = 1 + m_amount
 
     # output array
@@ -135,7 +135,7 @@ elif eval_mode == 'full':
     os.remove(temp_path)
 
 elif eval_mode == 'last5':
-    m_num = int(input('Enter the last model number (e.g., 150 for m150):'))
+    m_num = int(input('Enter the last model number (e.g., 150 for m150): '))
     weight_amount = 1 + m_num
     amount = 5
     start_num = weight_amount - amount

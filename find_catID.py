@@ -1,6 +1,3 @@
-from PythonAPI.pycocotools.coco import COCO
-# import json
-
 # coco 80 categories names
 coco_categories = ['person', 'bicycle', 'car', 'motorcycle', 'airplane',
                    'bus', 'train', 'truck', 'boat', 'traffic light',
@@ -20,6 +17,9 @@ coco_categories = ['person', 'bicycle', 'car', 'motorcycle', 'airplane',
                    'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']
 
 if __name__ == '__main__':
+    from PythonAPI.pycocotools.coco import COCO
+    # import json
+
     # # get image_ids of subset
     # dataset_dir = './cocoDS'
     # year = '2017'
