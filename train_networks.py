@@ -67,6 +67,8 @@ class CocoConfig(Config):
     # Number of training steps per epoch
     STEPS_PER_EPOCH = images_per_weight
 
+    VALIDATION_STEPS = 5
+
     # Adjust learning rate if needed
     LEARNING_RATE = 0.0001
 
