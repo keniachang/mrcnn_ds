@@ -216,6 +216,18 @@ class CocoDataset(utils.Dataset):
 
 
 if __name__ == '__main__':
+    import argparse
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Train Mask R-CNN on MS COCO.')
+    parser.add_argument("model",
+                        metavar="/path/to/weights.h5",
+                        help="Path to weights .h5 file or 'initial'")
+    args = parser.parse_args()
+
+    model_path = args.model
+    if model_path.lower() == "initial":
+        model_path = initial_weight_path
+
     # Configurations
     config = CocoConfig()
     config.display()
@@ -226,8 +238,8 @@ if __name__ == '__main__':
     model = modellib.MaskRCNN(mode="training", config=config, model_dir=logs_dir)
 
     # Load weights
-    print("Loading weights ", initial_weight_path)
-    model.load_weights(initial_weight_path, by_name=True)
+    print("Loading weights ", model_path)
+    model.load_weights(model_path, by_name=True)
 
     # Training dataset
     dataset_train = CocoDataset()
