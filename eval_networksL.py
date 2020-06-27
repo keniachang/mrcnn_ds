@@ -18,7 +18,7 @@ MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 dataset_folder = 'coco_datasets'
 dataset_type = 'val'
 dataset_year = '2014'
-eval_labels = ['dog']
+eval_labels = ['person']
 
 # option for detecting x images randomly
 detect_num = 100

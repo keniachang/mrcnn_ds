@@ -28,24 +28,35 @@ DEFAULT_DATASET_YEAR = "2014"
 
 # Which network?
 network_label_num = int(input('Enter number of label this network will be trained on: '))
+must_have_label = input('A must have label? (<name>/none): ')
 assert 0 < network_label_num < 81
+if must_have_label.lower() == 'none':
+    must_have_label = None
+else:
+    must_have_label = must_have_label.lower()
+    assert must_have_label in coco_categories
 
 # Constants
 label_size = 500
-epochs_per_label = 10
-images_per_weight = label_size / epochs_per_label
+# epochs_per_label = 10
+# images_per_weight = label_size / epochs_per_label
+images_per_weight = 10
 initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'
-must_have_label = 'dog'
+
 network_labels = []
-if network_label_num == 1:
-    network_labels.append(must_have_label)
+if must_have_label:
+    if network_label_num == 1:
+        network_labels.append(must_have_label)
+    else:
+        coco_labels = coco_categories[:network_label_num]
+        if must_have_label in coco_labels:
+            network_labels = coco_labels
+        else:
+            network_labels.extend(coco_labels[:(network_label_num - 1)])
+            network_labels.append(must_have_label)
 else:
     coco_labels = coco_categories[:network_label_num]
-    if must_have_label in coco_labels:
-        network_labels = coco_labels
-    else:
-        network_labels.extend(coco_labels[:(network_label_num - 1)])
-        network_labels.append(must_have_label)
+    network_labels.extend(coco_labels)
 
 
 class CocoConfig(Config):
@@ -74,7 +85,7 @@ class CocoConfig(Config):
     # Skip detections with < 70% confidence
     DETECTION_MIN_CONFIDENCE = 0.7
 
-    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_coco80_l{}_weights/logs'.format(network_label_num)
+    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_coco80_lb{}_weights/logs'.format(network_label_num)
 
 
 class CocoDataset(utils.Dataset):
