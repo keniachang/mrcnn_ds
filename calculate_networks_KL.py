@@ -6,6 +6,7 @@ import scipy.stats as ss
 import csv
 import mrcnn.model as modellib
 import extend_network_to_array as ext_net_arr
+from eval_networksL import InferenceConfig
 
 ROOT_DIR = os.path.abspath("./")
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -212,6 +213,9 @@ if __name__ == '__main__':
     elif network == 'C80':
         config = ext_net_arr.InferenceConfig80C()
         model_dir = ext_net_arr.MODEL_DIR80C
+    elif network == 'L':
+        config = InferenceConfig()
+        model_dir = os.path.join(ROOT_DIR, "Network_L")
     else:
         sys.exit('Unsupported network!')
 
