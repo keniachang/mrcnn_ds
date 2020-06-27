@@ -83,9 +83,9 @@ if __name__ == '__main__':
 
     print('\nThe save path for output needs to be the same level as logs folder containing weights.\n')
     # ask users for evaluation mode and the path of accuracy output file
-    eval_mode = input('Enter the mode for computing AP (first2/full/last5): ')
+    eval_mode = input('Enter the mode for computing AP (first2/full/last5/last): ')
     output_path = input('Enter the save path for output '
-                        '(e.g., ../drive/My Drive/mrcnn_coco80_l1_weights/dog_last5_acc.csv): ')
+                        '(e.g., ../drive/My Drive/mrcnn_coco80_l1_weights/dog_last_acc.csv): ')
 
     dir_path = os.path.dirname(output_path)
     w_path = dir_path + '/logs/mask_rcnn_coco_'
@@ -151,6 +151,12 @@ if __name__ == '__main__':
         for index in range(start_num, weight_amount):     # 146-151 = m146 to m150
             output[i] = loop_weight(w_path, index)
             i += 1
+        save_data(output, output_path)
+
+    elif eval_mode == 'last':
+        m_num = int(input('Enter the last model number (e.g., 150 for m150): '))
+        output = np.zeros(1)
+        output[0] = loop_weight(w_path, m_num)
         save_data(output, output_path)
 
     else:
