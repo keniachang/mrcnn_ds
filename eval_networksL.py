@@ -21,7 +21,7 @@ dataset_year = '2014'
 eval_labels = ['person']
 
 # option for detecting x images randomly
-detect_num = 100
+detect_num = int(input('Enter amount of images used for evaluating (0 means all): '))
 
 
 class InferenceConfig(config.__class__):
@@ -54,7 +54,7 @@ def loop_weight(path_ex_ep, ep):
     model.load_weights(weights_path, by_name=True)
 
     #  an option to randomly select 50 image ids for testing
-    if detect_num:
+    if detect_num != 0:
         image_ids = np.random.choice(dataset.image_ids, detect_num, replace=False, p=None)
         APs = compute_batch_ap(image_ids)
     else:
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     # ask users for evaluation mode and the path of accuracy output file
     eval_mode = input('Enter the mode for computing AP (first2/full/last5/last): ')
     output_path = input('Enter the save path for output '
-                        '(e.g., ../drive/My Drive/mrcnn_coco80_l1_weights/dog_last_acc.csv): ')
+                        '(e.g., ../drive/My Drive/mrcnn_coco80_lb1_weights/dog_last_acc.csv): ')
 
     dir_path = os.path.dirname(output_path)
     w_path = dir_path + '/logs/mask_rcnn_coco_'
