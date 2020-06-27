@@ -20,6 +20,9 @@ dataset_type = 'val'
 dataset_year = '2014'
 eval_labels = ['dog']
 
+# option for detecting x images randomly
+detect_num = 100
+
 
 class InferenceConfig(config.__class__):
     # Run detection on one image at a time
@@ -50,11 +53,12 @@ def loop_weight(path_ex_ep, ep):
     print("Loading weights ", weights_path)
     model.load_weights(weights_path, by_name=True)
 
-    # # an option to randomly select 50 image ids for testing
-    # image_ids = np.random.choice(dataset.image_ids, 50, replace=False, p=None)
-    # APs = compute_batch_ap(image_ids)
-
-    APs = compute_batch_ap(dataset.image_ids)
+    #  an option to randomly select 50 image ids for testing
+    if detect_num:
+        image_ids = np.random.choice(dataset.image_ids, detect_num, replace=False, p=None)
+        APs = compute_batch_ap(image_ids)
+    else:
+        APs = compute_batch_ap(dataset.image_ids)
 
     print(APs)
     print("mAP @ IoU=50: ", np.mean(APs))
