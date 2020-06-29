@@ -26,15 +26,7 @@ from mrcnn import model as modellib, utils
 dataset = 'coco_datasets'
 DEFAULT_DATASET_YEAR = "2014"
 
-# Which network?
 network_label_num = int(input('Enter number of label this network will be trained on: '))
-must_have_label = input('A must have label? (<name>/none): ')
-assert 0 < network_label_num < 81
-if must_have_label.lower() == 'none':
-    must_have_label = None
-else:
-    must_have_label = must_have_label.lower()
-    assert must_have_label in coco_categories
 
 # Constants
 label_size = 500
@@ -42,21 +34,6 @@ label_size = 500
 # images_per_weight = label_size / epochs_per_label
 images_per_weight = 10
 initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'
-
-network_labels = []
-if must_have_label:
-    if network_label_num == 1:
-        network_labels.append(must_have_label)
-    else:
-        coco_labels = coco_categories[:network_label_num]
-        if must_have_label in coco_labels:
-            network_labels = coco_labels
-        else:
-            network_labels.extend(coco_labels[:(network_label_num - 1)])
-            network_labels.append(must_have_label)
-else:
-    coco_labels = coco_categories[:network_label_num]
-    network_labels.extend(coco_labels)
 
 
 class CocoConfig(Config):
@@ -238,6 +215,30 @@ if __name__ == '__main__':
     model_path = args.model
     if model_path.lower() == "initial":
         model_path = initial_weight_path
+
+    # Which network?
+    must_have_label = input('A must have label? (<name>/none): ')
+    assert 0 < network_label_num < 81
+    if must_have_label.lower() == 'none':
+        must_have_label = None
+    else:
+        must_have_label = must_have_label.lower()
+        assert must_have_label in coco_categories
+
+    network_labels = []
+    if must_have_label:
+        if network_label_num == 1:
+            network_labels.append(must_have_label)
+        else:
+            coco_labels = coco_categories[:network_label_num]
+            if must_have_label in coco_labels:
+                network_labels = coco_labels
+            else:
+                network_labels.extend(coco_labels[:(network_label_num - 1)])
+                network_labels.append(must_have_label)
+    else:
+        coco_labels = coco_categories[:network_label_num]
+        network_labels.extend(coco_labels)
 
     # Configurations
     config = CocoConfig()
