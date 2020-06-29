@@ -171,7 +171,7 @@ if __name__ == '__main__':
                         metavar="<command>",
                         help="'1m2w' or '1mfsw'")
     parser.add_argument('--network', required=True,
-                        metavar="<A80|B80|C80>",
+                        metavar="<A80|B80|C80|L>",
                         help="Network type")
     parser.add_argument('--path1', required=True,
                         metavar="/path/to/first/weights",

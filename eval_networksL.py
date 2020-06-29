@@ -20,9 +20,6 @@ dataset_type = 'val'
 dataset_year = '2014'
 eval_labels = ['person']
 
-# option for detecting x images randomly
-detect_num = int(input('Enter amount of images used for evaluating (0 means all): '))
-
 
 class InferenceConfig(config.__class__):
     # Run detection on one image at a time
@@ -71,6 +68,9 @@ def save_data(data, path):
 
 
 if __name__ == '__main__':
+    # option for detecting x images randomly
+    detect_num = int(input('Enter amount of images used for evaluating (0 means all): '))
+
     config = InferenceConfig()
     config.display()
 

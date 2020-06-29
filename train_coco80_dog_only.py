@@ -556,4 +556,4 @@ if __name__ == '__main__':
         print("'{}' is not recognized. "
               "Use 'train' or 'evaluate'".format(args.command))
 
-print('Finish process.')
+    print('Finish process.')

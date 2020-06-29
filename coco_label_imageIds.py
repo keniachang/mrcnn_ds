@@ -28,7 +28,7 @@ def read_label_image_ids(path):
     return image_ids
 
 
-def get_label_image_ids_file_path(label, size, file_dir='./networks_labels_imgIds/'):
+def get_label_image_ids_file_path(label, size, file_dir='./networksL_imgIds/'):
     file_path = file_dir + 'coco_' + label + str(size) + 'imgIds.csv'
     return file_path
 
