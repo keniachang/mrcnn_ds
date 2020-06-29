@@ -50,15 +50,17 @@ def compute_batch_ap(image_ids):
     return APs
 
 
-def loop_weight(path_ex_ep, ep):
+def loop_weight(path_ex_ep, ep, img_ids=None):
     weights_path = path_ex_ep + ("%04d" % ep) + '.h5'
     print("Loading weights ", weights_path)
     model.load_weights(weights_path, by_name=True)
 
     #  an option to randomly select 50 image ids for testing
-    if detect_num != 0:
-        image_ids = np.random.choice(dataset.image_ids, detect_num, replace=False, p=None)
-        APs = compute_batch_ap(image_ids)
+    if img_ids:
+        # image_ids = np.random.choice(dataset.image_ids, detect_num, replace=False, p=None)
+        # APs = compute_batch_ap(image_ids)
+
+        APs = compute_batch_ap(img_ids)
     else:
         APs = compute_batch_ap(dataset.image_ids)
 
@@ -83,6 +85,9 @@ if __name__ == '__main__':
     dataset.load_coco(dataset_folder, dataset_type, eval_labels, year=dataset_year)
     dataset.prepare()
 
+    if detect_num != 0:
+        image_ids = np.random.choice(dataset.image_ids, detect_num, replace=False, p=None)
+
     dir_path_template = '../drive/My Drive/mrcnn_coco80_lb{}_weights'
 
     outputs = []
@@ -91,7 +96,7 @@ if __name__ == '__main__':
         w_path = dir_path + '/logs/mask_rcnn_coco_'
         m_num = weight
 
-        output = loop_weight(w_path, m_num)
+        output = loop_weight(w_path, m_num, img_ids=image_ids)
         outputs.append(output)
 
     print('mAPs of each network:')
