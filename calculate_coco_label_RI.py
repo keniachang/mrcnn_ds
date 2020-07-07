@@ -324,7 +324,6 @@ def mold_inputs(config, images):
 
 if __name__ == '__main__':
     from find_catID import coco_categories
-    from train_networksL import CocoConfig
     from PythonAPI.pycocotools.coco import COCO
 
     label_size = 500
