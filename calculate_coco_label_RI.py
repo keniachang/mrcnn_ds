@@ -282,7 +282,7 @@ def compose_image_meta(image_id, original_image_shape, image_shape,
     return meta
 
 
-def mold_inputs(config, images):
+def mold_inputs(config, image, images=[]):
     """Takes a list of images and modifies them to the format expected
     as an input to the neural network.
     images: List of image matrices [height,width,depth]. Images can have
@@ -294,32 +294,41 @@ def mold_inputs(config, images):
     windows: [N, (y1, x1, y2, x2)]. The portion of the image that has the
         original image (padding excluded).
     """
-    molded_images = []
+    # molded_images = []
     # image_metas = []
     # windows = []
-    for image in images:
-        # Resize image
-        molded_image, window, scale, padding, crop = resize_image(
-            image,
-            min_dim=config.IMAGE_MIN_DIM,
-            min_scale=config.IMAGE_MIN_SCALE,
-            max_dim=config.IMAGE_MAX_DIM,
-            mode=config.IMAGE_RESIZE_MODE)
-        molded_image = mold_image(molded_image, config)
-        # # Build image_meta
-        # image_meta = compose_image_meta(
-        #     0, image.shape, molded_image.shape, window, scale,
-        #     np.zeros([config.NUM_CLASSES], dtype=np.int32))
-        # Append
-        molded_images.append(molded_image)
-        # windows.append(window)
-        # image_metas.append(image_meta)
-    # Pack into arrays
-    molded_images = np.stack(molded_images)
+    # for image in images:
+    #     # Resize image
+    #     molded_image, window, scale, padding, crop = resize_image(
+    #         image,
+    #         min_dim=config.IMAGE_MIN_DIM,
+    #         min_scale=config.IMAGE_MIN_SCALE,
+    #         max_dim=config.IMAGE_MAX_DIM,
+    #         mode=config.IMAGE_RESIZE_MODE)
+    #     molded_image = mold_image(molded_image, config)
+    #     # Build image_meta
+    #     image_meta = compose_image_meta(
+    #         0, image.shape, molded_image.shape, window, scale,
+    #         np.zeros([config.NUM_CLASSES], dtype=np.int32))
+    #     # Append
+    #     molded_images.append(molded_image)
+    #     windows.append(window)
+    #     image_metas.append(image_meta)
+    # # Pack into arrays
+    # molded_images = np.stack(molded_images)
     # image_metas = np.stack(image_metas)
     # windows = np.stack(windows)
     # return molded_images, image_metas, windows
-    return molded_images
+
+    # Resize image
+    molded_image, window, scale, padding, crop = resize_image(
+        image,
+        min_dim=config.IMAGE_MIN_DIM,
+        min_scale=config.IMAGE_MIN_SCALE,
+        max_dim=config.IMAGE_MAX_DIM,
+        mode=config.IMAGE_RESIZE_MODE)
+    molded_image = mold_image(molded_image, config)
+    return molded_image
 
 
 if __name__ == '__main__':
@@ -351,13 +360,14 @@ if __name__ == '__main__':
         # # TODO: get the images & also resize them as how it was prep for training
         # # Note: should the data passed into ri be the images data or mask data of the label in the images?
         class_images = []
+        print('Loading and resizing images...')
         for i in class_img_ids:
-            path = coco.imgs[i]['coco_url']
-            class_images.append(load_image(path))
-        print('Images are loaded, resizing them now...')
-        class_data = mold_inputs(netL_config, class_images)
-        print('Images are resized, calculating RI...')
-        class_ri = relative_information(class_data)
+            img_path = coco.imgs[i]['coco_url']
+            img = load_image(img_path)
+            class_images.append(mold_inputs(netL_config, img))
+        class_images = np.stack(class_images)
+        print('Images are loaded and resized, calculating RI...')
+        class_ri = relative_information(class_images)
         print(label_name, 'RI:', class_ri)
         RIs.append({label_name: class_ri})
         print()
@@ -370,5 +380,6 @@ if __name__ == '__main__':
         #     image_ids.extend(class_img_ids)
     # # Remove duplicates
     # image_ids = list(set(image_ids))
+    print(RIs)
 
     print('Finish process.')
