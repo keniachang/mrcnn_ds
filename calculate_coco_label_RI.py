@@ -340,11 +340,10 @@ if __name__ == '__main__':
     netL_config = CocoConfig()
 
     # calculate RI for each coco label (first 10 coco labels) using each label's 500 training images
-    coco = COCO("../drive/My Drive/coco_datasets/annotations/instances_train2014.json")
-    # coco = COCO("./cocoDS/annotations/instances_train2014.json")
+    coco = COCO("./cocoDS/annotations/instances_train2014.json")
+    print()
 
     class_ids = coco.getCatIds(catNms=labels)
-    # image_ids = []
     RIs = []
     for class_id in class_ids:
         # get current label
@@ -355,31 +354,26 @@ if __name__ == '__main__':
         class_img_ids = list(coco.getImgIds(catIds=[class_id]))
         class_img_ids = list(set(class_img_ids))
         class_img_ids = class_img_ids[:label_size]
-        # print('# of images:', len((class_img_ids)))
+        print('# of images:', len(class_img_ids))
 
         # # TODO: get the images & also resize them as how it was prep for training
         # # Note: should the data passed into ri be the images data or mask data of the label in the images?
+        ilr = 1
         class_images = []
         print('Loading and resizing images...')
         for i in class_img_ids:
             img_path = coco.imgs[i]['coco_url']
             img = load_image(img_path)
             class_images.append(mold_inputs(netL_config, img))
+            print(label_name + ':', ilr, 'images are loaded and resized')
+            ilr += 1
         class_images = np.stack(class_images)
+        print('Dataset shape:', np.shape(class_images))
         print('Images are loaded and resized, calculating RI...')
         class_ri = relative_information(class_images)
         print(label_name, 'RI:', class_ri)
         RIs.append({label_name: class_ri})
         print()
 
-        # # get all labels' training data
-        # if len(class_img_ids) < label_size:
-        #     image_ids.extend(class_img_ids)
-        # else:
-        #     class_img_ids = class_img_ids[:label_size]
-        #     image_ids.extend(class_img_ids)
-    # # Remove duplicates
-    # image_ids = list(set(image_ids))
     print(RIs)
-
     print('Finish process.')
