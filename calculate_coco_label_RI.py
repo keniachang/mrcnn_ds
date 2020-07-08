@@ -37,6 +37,9 @@ class CocoConfig(Config):
     # Skip detections with < 70% confidence
     DETECTION_MIN_CONFIDENCE = 0.7
 
+    IMAGE_MIN_DIM = 400
+    IMAGE_MAX_DIM = 512
+
     DEFAULT_LOGS_DIR = './logs'
 
 
