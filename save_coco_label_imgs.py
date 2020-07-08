@@ -40,70 +40,6 @@ class CocoConfig(Config):
     DEFAULT_LOGS_DIR = './logs'
 
 
-def softmax(a):
-    ex_a = np.exp(a)
-    # print('Sum of np.exp(a) or ex_a:', sum(ex_a))
-    return ex_a / sum(ex_a)
-
-
-def rel_entr(a, b):
-    array_a = np.array(a, dtype=np.float64)
-    array_b = np.array(b, dtype=np.float64)
-    # print(array_a)
-    # print(array_b)
-    v = array_a / array_b
-    lg = np.log(v)
-    return array_a * lg
-
-
-def entropy(pk, qk=None, base=None, axis=0):
-    pk = np.array(pk, dtype=np.float64)
-    # print('Softmax of pk')
-    pk = softmax(pk)
-    if qk is None:
-        vec = ss.entr(pk)
-    else:
-        qk = np.array(qk, dtype=np.float64)
-        if qk.shape != pk.shape:
-            raise ValueError("qk and pk must have same shape.")
-        # print('Softmax of qk')
-        qk = softmax(qk)
-        vec = rel_entr(pk, qk)
-    S = np.sum(vec, axis=axis)
-    if base is not None:
-        S /= np.log(base)
-    return S
-
-
-def KL_div(array1, array2):
-    return entropy(array1, array2)
-
-
-def resize_layer(layer_w):
-    length = 1
-    shape = np.shape(layer_w)
-    for i in range(len(shape)):
-        length = length * shape[i]
-    # print('length = ',length)
-    flat_array = np.reshape(layer_w, length)
-    # print(flat_array,dtype=float)
-    return flat_array
-
-
-def relative_information(dataset):
-    s = resize_layer(sum(dataset) / len(dataset))
-    ri = 0
-    for si in dataset:
-        s_flat = resize_layer(si)
-        ri = ri + KL_div(s_flat, s) + KL_div(s, s_flat)
-    return ri
-
-
-def save_data(data, path):
-    data_frame = pd.DataFrame(data)
-    data_frame.to_csv(path, index=False, header=False)
-
-
 def load_image(path):
     """Load the specified image and return a [H,W,3] Numpy array.
     """
@@ -257,32 +193,7 @@ def mold_image(images, config):
     return images.astype(np.float32) - config.MEAN_PIXEL
 
 
-def compose_image_meta(image_id, original_image_shape, image_shape,
-                       window, scale, active_class_ids):
-    """Takes attributes of an image and puts them in one 1D array.
-
-    image_id: An int ID of the image. Useful for debugging.
-    original_image_shape: [H, W, C] before resizing or padding.
-    image_shape: [H, W, C] after resizing and padding
-    window: (y1, x1, y2, x2) in pixels. The area of the image where the real
-            image is (excluding the padding)
-    scale: The scaling factor applied to the original image (float32)
-    active_class_ids: List of class_ids available in the dataset from which
-        the image came. Useful if training on images from multiple datasets
-        where not all classes are present in all datasets.
-    """
-    meta = np.array(
-        [image_id] +                  # size=1
-        list(original_image_shape) +  # size=3
-        list(image_shape) +           # size=3
-        list(window) +                # size=4 (y1, x1, y2, x2) in image cooredinates
-        [scale] +                     # size=1
-        list(active_class_ids)        # size=num_classes
-    )
-    return meta
-
-
-def mold_inputs(config, image, images=[]):
+def mold_inputs(config, image):
     """Takes a list of images and modifies them to the format expected
     as an input to the neural network.
     images: List of image matrices [height,width,depth]. Images can have
@@ -294,32 +205,6 @@ def mold_inputs(config, image, images=[]):
     windows: [N, (y1, x1, y2, x2)]. The portion of the image that has the
         original image (padding excluded).
     """
-    # molded_images = []
-    # image_metas = []
-    # windows = []
-    # for image in images:
-    #     # Resize image
-    #     molded_image, window, scale, padding, crop = resize_image(
-    #         image,
-    #         min_dim=config.IMAGE_MIN_DIM,
-    #         min_scale=config.IMAGE_MIN_SCALE,
-    #         max_dim=config.IMAGE_MAX_DIM,
-    #         mode=config.IMAGE_RESIZE_MODE)
-    #     molded_image = mold_image(molded_image, config)
-    #     # Build image_meta
-    #     image_meta = compose_image_meta(
-    #         0, image.shape, molded_image.shape, window, scale,
-    #         np.zeros([config.NUM_CLASSES], dtype=np.int32))
-    #     # Append
-    #     molded_images.append(molded_image)
-    #     windows.append(window)
-    #     image_metas.append(image_meta)
-    # # Pack into arrays
-    # molded_images = np.stack(molded_images)
-    # image_metas = np.stack(image_metas)
-    # windows = np.stack(windows)
-    # return molded_images, image_metas, windows
-
     # Resize image
     molded_image, window, scale, padding, crop = resize_image(
         image,
@@ -334,18 +219,20 @@ def mold_inputs(config, image, images=[]):
 if __name__ == '__main__':
     from find_catID import coco_categories
     from PythonAPI.pycocotools.coco import COCO
+    from PIL import Image
+    # import urllib.request
+    # urllib.request.urlretrieve("http://www.digimouth.com/news/media/2011/09/google-logo.jpg", "local-filename.jpg")
 
-    label_size = 500
-    labels = coco_categories[:10]
+    save_path_template = './coco10L_500imgs/{}/{}'  # .format(label_name, image_name)
+    label_size = 2
+    labels = coco_categories[:1]
     netL_config = CocoConfig()
 
-    # calculate RI for each coco label (first 10 coco labels) using each label's 500 training images
-    coco = COCO("../drive/My Drive/coco_datasets/annotations/instances_train2014.json")
-    # coco = COCO("./cocoDS/annotations/instances_train2014.json")
+    # save the first 500 images of coco label
+    coco = COCO("./cocoDS/annotations/instances_train2014.json")
     print()
 
     class_ids = coco.getCatIds(catNms=labels)
-    RIs = []
     for class_id in class_ids:
         # get current label
         category = (coco.loadCats(class_id))[0]
@@ -357,25 +244,29 @@ if __name__ == '__main__':
         class_img_ids = class_img_ids[:label_size]
         print('# of images:', len(class_img_ids))
 
-        # # TODO: get the images & also resize them as how it was prep for training
-        # # Note: should the data passed into ri be the images data or mask data of the label in the images?
-        ilr = 1
-        class_images = []
-        print('Loading and resizing images...')
+        num = 1
+        print('Loading, resizing and saving images...')
         for i in class_img_ids:
+            # load image
             img_path = coco.imgs[i]['coco_url']
             img = load_image(img_path)
-            molded_img = mold_inputs(netL_config, img)
-            class_images.append(molded_img)
-            print(label_name + ':', ilr, 'images are loaded and resized')
-            ilr += 1
-        # class_images = np.stack(class_images)
-        print('Dataset shape:', np.shape(class_images))
-        print('Images are loaded and resized, calculating RI...')
-        class_ri = relative_information(class_images)
-        print(label_name, 'RI:', class_ri)
-        RIs.append({label_name: class_ri})
-        print()
 
-    print(RIs)
+            # get image name and check if it exists in folder
+            image_name = coco.imgs[i]['file_name']
+            save_path = save_path_template.format(label_name, image_name)
+            if os.path.exists(save_path):
+                continue
+            else:
+                save_dir = os.path.dirname(save_path)
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+
+            # resize and save the image
+            img = mold_inputs(netL_config, img)
+            current_img = Image.fromarray(img)
+            current_img.save(save_path)
+
+            print(label_name + ':', num, 'images are resized and saved')
+            num += 1
+
     print('Finish process.')
