@@ -260,32 +260,7 @@ def mold_image(images, config):
     return images.astype(np.float32) - config.MEAN_PIXEL
 
 
-def compose_image_meta(image_id, original_image_shape, image_shape,
-                       window, scale, active_class_ids):
-    """Takes attributes of an image and puts them in one 1D array.
-
-    image_id: An int ID of the image. Useful for debugging.
-    original_image_shape: [H, W, C] before resizing or padding.
-    image_shape: [H, W, C] after resizing and padding
-    window: (y1, x1, y2, x2) in pixels. The area of the image where the real
-            image is (excluding the padding)
-    scale: The scaling factor applied to the original image (float32)
-    active_class_ids: List of class_ids available in the dataset from which
-        the image came. Useful if training on images from multiple datasets
-        where not all classes are present in all datasets.
-    """
-    meta = np.array(
-        [image_id] +                  # size=1
-        list(original_image_shape) +  # size=3
-        list(image_shape) +           # size=3
-        list(window) +                # size=4 (y1, x1, y2, x2) in image cooredinates
-        [scale] +                     # size=1
-        list(active_class_ids)        # size=num_classes
-    )
-    return meta
-
-
-def mold_inputs(config, image, images=[]):
+def mold_inputs(config, image):
     """Takes a list of images and modifies them to the format expected
     as an input to the neural network.
     images: List of image matrices [height,width,depth]. Images can have
@@ -297,32 +272,6 @@ def mold_inputs(config, image, images=[]):
     windows: [N, (y1, x1, y2, x2)]. The portion of the image that has the
         original image (padding excluded).
     """
-    # molded_images = []
-    # image_metas = []
-    # windows = []
-    # for image in images:
-    #     # Resize image
-    #     molded_image, window, scale, padding, crop = resize_image(
-    #         image,
-    #         min_dim=config.IMAGE_MIN_DIM,
-    #         min_scale=config.IMAGE_MIN_SCALE,
-    #         max_dim=config.IMAGE_MAX_DIM,
-    #         mode=config.IMAGE_RESIZE_MODE)
-    #     molded_image = mold_image(molded_image, config)
-    #     # Build image_meta
-    #     image_meta = compose_image_meta(
-    #         0, image.shape, molded_image.shape, window, scale,
-    #         np.zeros([config.NUM_CLASSES], dtype=np.int32))
-    #     # Append
-    #     molded_images.append(molded_image)
-    #     windows.append(window)
-    #     image_metas.append(image_meta)
-    # # Pack into arrays
-    # molded_images = np.stack(molded_images)
-    # image_metas = np.stack(image_metas)
-    # windows = np.stack(windows)
-    # return molded_images, image_metas, windows
-
     # Resize image
     molded_image, window, scale, padding, crop = resize_image(
         image,
@@ -338,11 +287,12 @@ if __name__ == '__main__':
     from find_catID import coco_categories
     from PythonAPI.pycocotools.coco import COCO
 
-    label_size = 500
-    labels = coco_categories[:10]
-    netL_config = CocoConfig()
-
     # calculate RI for each coco label (first 10 coco labels) using each label's 500 training images
+    start = int(input('Enter the index of starting label (e.g., 0 as initial): '))
+    assert -1 < start < 10
+    label_data_size = 500
+    labels = coco_categories[start:10]
+    netL_config = CocoConfig()
     coco = COCO("../drive/My Drive/coco_datasets/annotations/instances_train2014.json")
     # coco = COCO("./cocoDS/annotations/instances_train2014.json")
     print()
@@ -357,12 +307,12 @@ if __name__ == '__main__':
 
         class_img_ids = list(coco.getImgIds(catIds=[class_id]))
         class_img_ids = list(set(class_img_ids))
-        class_img_ids = class_img_ids[:label_size]
+        class_img_ids = class_img_ids[:label_data_size]
         print('# of images:', len(class_img_ids))
 
-        # # TODO: get the images & also resize them as how it was prep for training
-        # # Note: should the data passed into ri be the images data or mask data of the label in the images?
-        ilr = 1
+        # get the images & also resize them as how it was prep for training in mrcnn
+        # Note: should the data passed into ri be the images data or mask data of the label in the images?
+        num = 0
         class_images = []
         print('Loading and resizing images...')
         for i in class_img_ids:
@@ -370,15 +320,14 @@ if __name__ == '__main__':
             img = load_image(img_path)
             molded_img = mold_inputs(netL_config, img)
             class_images.append(molded_img)
-            print(label_name + ':', ilr, 'images are loaded and resized')
-            ilr += 1
-        # class_images = np.stack(class_images)
+            num += 1
+            if num % 10 == 0:
+                print(label_name + ':', num, 'images are loaded and resized to shape', molded_img.shape)
         print('Dataset shape:', np.shape(class_images))
         print('Images are loaded and resized, calculating RI...')
         class_ri = relative_information(class_images)
-        print(label_name, 'RI:', class_ri)
         RIs.append({label_name: class_ri})
-        print()
+        print(label_name, 'RI:', class_ri, '\n')
 
     print(RIs)
     print('Finish process.')
