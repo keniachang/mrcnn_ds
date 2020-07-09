@@ -66,6 +66,16 @@ def save_data(data, path):
 
 
 if __name__ == '__main__':
+    import argparse
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Evaluate x, y Label Network based on evaluate mode.')
+    parser.add_argument("mode",
+                        metavar="<full|last>",
+                        help="Mode to evaluate")
+    args = parser.parse_args()
+    eval_mode = args.mode
+
     # dataset
     dataset_folder = 'coco_datasets'
     dataset_type = 'val'
@@ -91,10 +101,6 @@ if __name__ == '__main__':
     dataset = networksL.CocoDataset()
     dataset.load_coco(dataset_folder, dataset_type, eval_labels, year=dataset_year)
     dataset.prepare()
-
-    print('\nThe save path for output needs to be the same level as logs folder containing weights.\n')
-    # ask users for evaluation mode and the path of accuracy output file
-    eval_mode = input('Enter the mode for computing AP (full/last): ')
 
     output_path = '../drive/My Drive/mrcnn_{}_weights/{}_{}_acc.csv'.format(label, eval_label, eval_mode)
     dir_path = os.path.dirname(output_path)
