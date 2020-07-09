@@ -42,7 +42,7 @@ def loop_weight(path_ex_ep, ep):
     model.load_weights(weights_path, by_name=True)
 
     #  an option to randomly select 50 image ids for testing
-    image_ids = np.random.choice(dataset.image_ids, 50, replace=False, p=None)
+    image_ids = dataset.image_ids[:50]
     APs = compute_batch_ap(image_ids)
 
     print(APs)
@@ -76,8 +76,10 @@ if __name__ == '__main__':
         # Accuracy on which label?
         eval_label = input('Choose which coco label to evaluate (person/bicycle): ')
         assert eval_label == 'person' or eval_label == 'bicycle'
+        m_amount = 49
     else:
         eval_label = label
+        m_amount = 50
     eval_labels = [eval_label]
 
     config = InferenceConfig()
@@ -92,32 +94,18 @@ if __name__ == '__main__':
 
     print('\nThe save path for output needs to be the same level as logs folder containing weights.\n')
     # ask users for evaluation mode and the path of accuracy output file
-    eval_mode = input('Enter the mode for computing AP (first2/full/last): ')
+    eval_mode = input('Enter the mode for computing AP (full/last): ')
 
     output_path = '../drive/My Drive/mrcnn_{}_weights/{}_{}_acc.csv'.format(label, eval_label, eval_mode)
     dir_path = os.path.dirname(output_path)
     w_path = dir_path + '/logs/mask_rcnn_coco_'
 
-    if eval_mode == 'first2':
-        amount = 2
-        weight_amount = 1 + amount
-        output = np.zeros(amount)
-        i = 0
-        for index in range(1, weight_amount):
-            output[i] = loop_weight(w_path, index)
-            i += 1
-        save_data(output, output_path)
-
-    elif eval_mode == 'full':
+    if eval_mode == 'full':
         # setup the path of the temp output file which will be saved every 5 times
         output_dir = os.path.dirname(output_path)
         filename = (os.path.basename(output_path)).split('.')
         temp_filename = str(filename[0]) + '_temp.' + str(filename[1])
         temp_path = os.path.join(output_dir, temp_filename)
-
-        # know when to end
-        m_amount = int(input('Enter the last model number (e.g., 50 for m50): '))
-        end = 1 + m_amount
 
         # output array
         output = np.zeros(m_amount)
@@ -133,22 +121,20 @@ if __name__ == '__main__':
             output[:current_shape] = previous_mAPs
         else:
             start = 1
+        end = 1 + m_amount
 
         i = start - 1
         for index in range(start, end):
             output[i] = loop_weight(w_path, index)
             i += 1
-
             if (index % 5 == 0) and (index + 1 != end):
                 save_data(output, temp_path)
-
         save_data(output, output_path)
         os.remove(temp_path)
 
     elif eval_mode == 'last':
-        m_num = int(input('Enter the last model number (e.g., 50 for m50): '))
         output = np.zeros(1)
-        output[0] = loop_weight(w_path, m_num)
+        output[0] = loop_weight(w_path, m_amount)
         save_data(output, output_path)
 
     else:
