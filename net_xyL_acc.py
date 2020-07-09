@@ -72,9 +72,12 @@ if __name__ == '__main__':
     dataset_year = '2014'
     label = networksL.label
 
-    # Accuracy on what label?
-    eval_label = input('Enter the coco label to evaluate (person/bicycle): ')
-    assert eval_label == 'person' or eval_label == 'bicycle'
+    if label == 'mix':
+        # Accuracy on which label?
+        eval_label = input('Choose which coco label to evaluate (person/bicycle): ')
+        assert eval_label == 'person' or eval_label == 'bicycle'
+    else:
+        eval_label = label
     eval_labels = [eval_label]
 
     config = InferenceConfig()
