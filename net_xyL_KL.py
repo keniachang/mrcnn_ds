@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats as ss
 import mrcnn.model as modellib
+import train_network_xyL
 from net_xyL_acc import InferenceConfig
 
 ROOT_DIR = os.path.abspath("./")
@@ -106,8 +107,7 @@ if __name__ == '__main__':
     model_dir = os.path.join(ROOT_DIR, "logs")
     model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
 
-    label = input('Enter the coco label use to train (person/bicycle/mix): ')
-    assert label == 'person' or label == 'bicycle' or label == 'mix'
+    label = train_network_xyL.label
     w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
 
     start = "%04d" % 1
