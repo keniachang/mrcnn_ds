@@ -21,6 +21,7 @@ def get_specified_category_image_ids(coco, cat_id, ex_cat_id, size=None):
         for annotation in annotations:
             # print(annotation)
             # print(annotation['category_id'])
+            # if annotation['category_id'] != cat_id:
             if annotation['category_id'] == ex_cat_id:
                 next_img = True
                 # print('NEXT!')
@@ -37,13 +38,23 @@ def get_specified_category_image_ids(coco, cat_id, ex_cat_id, size=None):
     return category_only_image_ids
 
 
+def get_xy_exclude_img_ids(coco, id1, size, id2=None):
+    img_ids = []
+    id1_img_ids = get_specified_category_image_ids(coco, id1, id2, size)
+    img_ids.append(id1_img_ids)
+    if id2:
+        id2_img_ids = get_specified_category_image_ids(coco, id2, id1, size)
+        img_ids.append(id2_img_ids)
+    return img_ids
+
+
 if __name__ == '__main__':
     from PythonAPI.pycocotools.coco import COCO
 
     # ann_path = "../drive/My Drive/coco_datasets/annotations/instances_val2014.json"
     ann_file = "./cocoDS/annotations/instances_train2014.json"
     label_id = 6
-    exclude_label_id = 7
+    exclude_label_id = 5
     dataset_size = 500
 
     coco_ins = COCO(ann_file)

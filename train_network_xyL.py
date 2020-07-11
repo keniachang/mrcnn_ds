@@ -13,6 +13,7 @@ import numpy as np
 import math
 from PythonAPI.pycocotools.coco import COCO
 from PythonAPI.pycocotools import mask as maskUtils
+from extract_category_imgIds import get_xy_exclude_img_ids as get_xy_labels_data
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("./")
@@ -26,8 +27,8 @@ dataset = 'coco_datasets'
 DEFAULT_DATASET_YEAR = "2014"
 
 # Which label to train network on?
-label = input('Enter the coco label use to train (person/bicycle/mix): ')
-assert label == 'person' or label == 'bicycle' or label == 'mix'
+label = input('Enter the coco label use to train (airplane/bus/mix): ')
+assert label == 'airplane' or label == 'bus' or label == 'mix'
 
 # Constants
 if label == 'mix':
@@ -81,14 +82,18 @@ class CocoDataset(utils.Dataset):
         selected_class_ids = coco.getCatIds(catNms=network_cats)
         image_ids = []
         if subset == 'train':
-            for cat_id in selected_class_ids:
-                cat_img_ids = list(coco.getImgIds(catIds=[cat_id]))
-                cat_img_ids = list(set(cat_img_ids))
-                if len(cat_img_ids) < label_size:
-                    image_ids.extend(cat_img_ids)
-                else:
-                    cat_img_ids = cat_img_ids[:label_size]
-                    image_ids.extend(cat_img_ids)
+            if len(selected_class_ids) == 1:
+                cat_id = selected_class_ids[0]
+                cat_img_ids = (get_xy_labels_data(coco, cat_id, label_size))[0]
+                image_ids.extend(cat_img_ids)
+            else:
+                cat_id1 = selected_class_ids[0]
+                cat_id2 = selected_class_ids[1]
+                cat_img_ids = get_xy_labels_data(coco, cat_id1, (label_size * 2), cat_id2)
+                cat1_img_ids = cat_img_ids[0][:label_size]
+                cat2_img_ids = cat_img_ids[1][:label_size]
+                image_ids.extend(cat1_img_ids)
+                image_ids.extend(cat2_img_ids)
         else:
             for cat_id in selected_class_ids:
                 image_ids.extend(list(coco.getImgIds(catIds=[cat_id])))
@@ -204,7 +209,7 @@ class CocoDataset(utils.Dataset):
 if __name__ == '__main__':
     # What coco label(s) data to use to train the network?
     if label == 'mix':
-        network_labels = ['person', 'bicycle']
+        network_labels = ['airplane', 'bus']
     else:
         network_labels = [label]
 
