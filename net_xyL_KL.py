@@ -111,10 +111,7 @@ if __name__ == '__main__':
     w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
 
     start = "%04d" % 1
-    if label == 'mix':
-        end = "%04d" % 49
-    else:
-        end = "%04d" % 50
+    end = "%04d" % 50
 
     weight1_path = w_path_template.format(label, start)
     weight2_path = w_path_template.format(label, end)
