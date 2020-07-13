@@ -27,11 +27,11 @@ dataset = 'coco_datasets'
 DEFAULT_DATASET_YEAR = "2014"
 
 # Which label to train network on?
-label = input('Enter the coco label use to train (airplane/bus/mix): ')
-assert label == 'airplane' or label == 'bus' or label == 'mix'
+label = input('Enter the coco label use to train (bus/train/mix67): ')
+assert label == 'bus' or label == 'train' or label == 'mix67'
 
 # Constants
-if label == 'mix':
+if label == 'mix67':
     label_size = 250
 else:
     label_size = 500
@@ -208,8 +208,8 @@ class CocoDataset(utils.Dataset):
 
 if __name__ == '__main__':
     # What coco label(s) data to use to train the network?
-    if label == 'mix':
-        network_labels = ['airplane', 'bus']
+    if label == 'mix67':
+        network_labels = ['bus', 'train']
     else:
         network_labels = [label]
 
