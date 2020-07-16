@@ -36,7 +36,10 @@ if label == 'mix67':
 else:
     label_size = 500
 images_per_weight = 10
-initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'
+
+# initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'
+initial_weight_path = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
+
 
 
 class CocoConfig(Config):
@@ -61,7 +64,7 @@ class CocoConfig(Config):
     # Skip detections with < 70% confidence
     DETECTION_MIN_CONFIDENCE = 0.7
 
-    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_{}_weights/logs'.format(label)
+    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_{}_head_weights/logs'.format(label)
 
 
 class CocoDataset(utils.Dataset):
@@ -222,8 +225,12 @@ if __name__ == '__main__':
 
     # Load weights
     model_path = initial_weight_path
+    if not os.path.exists(model_path):
+        utils.download_trained_weights(model_path)
     print("Loading weights ", model_path)
-    model.load_weights(model_path, by_name=True)
+    # model.load_weights(model_path, by_name=True)
+    model.load_weights(model_path, by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+                                                          "mrcnn_bbox", "mrcnn_mask"])
 
     # Training dataset
     dataset_train = CocoDataset()
@@ -241,6 +248,7 @@ if __name__ == '__main__':
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
                 epochs=total_epochs,
-                layers='all')
+                # layers='all')
+                layers='heads')
 
     print('Finish process.')
