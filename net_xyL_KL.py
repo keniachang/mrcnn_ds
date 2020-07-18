@@ -3,13 +3,14 @@ import pandas as pd
 import numpy as np
 import scipy.stats as ss
 import mrcnn.model as modellib
-from calculate import train_conv_layers, train_dense_layers, train_normal_layers, train_rpn_model, train_resnet_conv
+from calculate import train_conv_layers, train_dense_layers, train_normal_layers, train_rpn_model, \
+    train_resnet_conv_a, train_resnet_conv_b, train_resnet_conv_c, train_resnet_conv_r
 import train_network_xyL
 from net_xyL_acc import InferenceConfig
 
 ROOT_DIR = os.path.abspath("./")
 
-# MRCNN network head structure
+# MRCNN network structure
 mrcnn_head = {
     'train_conv_layers': train_conv_layers,
     'train_dense_layers': train_dense_layers,
@@ -17,8 +18,12 @@ mrcnn_head = {
     'train_rpn_model': train_rpn_model
 }
 mrcnn_backbone = {
-    'train_resnet_conv': train_resnet_conv
+    'train_resnet_conv_a': train_resnet_conv_a,
+    'train_resnet_conv_b': train_resnet_conv_b,
+    'train_resnet_conv_c': train_resnet_conv_c,
+    'train_resnet_conv_r': train_resnet_conv_r
 }
+mrcnn_structure = [mrcnn_head, mrcnn_backbone]
 
 
 def softmax(a):
@@ -100,6 +105,22 @@ def compare_network_head_weights(network_model, weight_path1, weight_path2, metr
     return dis
 
 
+def calc_network_weight(network_model, weight_path1, weight_path2, metric):
+    dis = 0
+    for var_name, layers in mrcnn_head.items():
+        for layer_name in layers:
+            network_model.load_weights(weight_path1, by_name=True)
+            layer_weights1 = network_model.keras_model.get_layer(layer_name).get_weights()
+            flatten_layer1 = resize_model(layer_weights1)
+
+            network_model.load_weights(weight_path2, by_name=True)
+            layer_weights2 = network_model.keras_model.get_layer(layer_name).get_weights()
+            flatten_layer2 = resize_model(layer_weights2)
+
+            dis += metric(flatten_layer1, flatten_layer2)
+    return dis
+
+
 def save_data(data, path):
     data_frame = pd.DataFrame(data)
     data_frame.to_csv(path, index=False, header=False)
@@ -119,11 +140,13 @@ if __name__ == '__main__':
     weight1_path = w_path_template.format(label, start)
     weight2_path = w_path_template.format(label, end)
 
-    kl_distance = compare_network_head_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
-    kl_ds = [kl_distance]
+    # kl_distance = compare_network_head_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
+    # kl_ds = [kl_distance]
+    kl_distance = calc_network_weight(model, weight1_path, weight2_path, KL_div)
+
     print(kl_distance)
 
-    output_path = '../drive/My Drive/mrcnn_{}_head_weights/{}_w{}_w{}_KL.csv'.format(label, label, start, end)
-    save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
+    # output_path = '../drive/My Drive/mrcnn_{}_head_weights/{}_w{}_w{}_KL.csv'.format(label, label, start, end)
+    # save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
 
     print('\nFinish Process.')
