@@ -15,7 +15,7 @@ mrcnn_head = {
     'train_conv_layers': train_conv_layers,
     'train_dense_layers': train_dense_layers,
     'train_normal_layers': train_normal_layers,
-    'train_rpn_model': train_rpn_model
+    'train_rpn_model': [train_rpn_model]
 }
 mrcnn_backbone = {
     'train_resnet_conv_a': train_resnet_conv_a,
