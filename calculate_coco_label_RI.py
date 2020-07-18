@@ -1,5 +1,3 @@
-import os
-import sys
 import numpy as np
 import scipy.stats as ss
 import pandas as pd
@@ -8,39 +6,6 @@ import skimage.color
 import skimage.transform
 import random
 from distutils.version import LooseVersion
-
-# Root directory of the project
-ROOT_DIR = os.path.abspath("./")
-sys.path.append(ROOT_DIR)  # To find local version of the library
-from mrcnn.config import Config
-
-
-class CocoConfig(Config):
-    # Give the configuration a recognizable name
-    NAME = "coco"
-
-    # We use a GPU with 12GB memory, which can fit two images.
-    # Adjust down if you use a smaller GPU.
-    IMAGES_PER_GPU = 1
-
-    # Number of classes (including background)
-    NUM_CLASSES = 1 + 80  # Background + catagory
-
-    # Number of training steps per epoch
-    STEPS_PER_EPOCH = 50
-
-    VALIDATION_STEPS = 20
-
-    # Adjust learning rate if needed
-    LEARNING_RATE = 0.0001
-
-    # Skip detections with < 70% confidence
-    DETECTION_MIN_CONFIDENCE = 0.7
-
-    IMAGE_MIN_DIM = 400
-    IMAGE_MAX_DIM = 512
-
-    DEFAULT_LOGS_DIR = './logs'
 
 
 def softmax(a):
@@ -284,50 +249,56 @@ def mold_inputs(config, image):
 
 
 if __name__ == '__main__':
-    from find_catID import coco_categories
     from PythonAPI.pycocotools.coco import COCO
+    import train_network_xyL as train_net
 
-    # calculate RI for each coco label (first 10 coco labels) using each label's 500 training images
-    start = int(input('Enter the index of starting label (e.g., 0 as initial): '))
-    assert -1 < start < 10
-    label_data_size = 500
-    labels = coco_categories[start:10]
-    netL_config = CocoConfig()
+    # get the coco labels used in training x, y labels network to calculate RI
+    label = train_net.label
+    labels = train_net.network_labels
+    label_size = train_net.label_size
+
+    # config
+    netL_config = train_net.CocoConfig()
+    netL_config.IMAGE_MIN_DIM = 400
+    netL_config.IMAGE_MAX_DIM = 512
+    netL_config.DEFAULT_LOGS_DIR = './logs'
+    netL_config.display()
+
     coco = COCO("../drive/My Drive/coco_datasets/annotations/instances_train2014.json")
-    # coco = COCO("./cocoDS/annotations/instances_train2014.json")
     print()
 
+    # get the image ids of the training dataset
     class_ids = coco.getCatIds(catNms=labels)
-    RIs = []
-    for class_id in class_ids:
-        # get current label
-        category = (coco.loadCats(class_id))[0]
-        label_name = category['name']
-        print(label_name, ':')
+    class_img_ids = []
+    if len(class_ids) == 1:
+        cat_id = class_ids[0]
+        cat_img_ids = (train_net.get_xy_labels_data(coco, cat_id, label_size))[0]
+        class_img_ids.extend(cat_img_ids)
+    else:
+        cat_id1 = class_ids[0]
+        cat_id2 = class_ids[1]
+        cat_img_ids = train_net.get_xy_labels_data(coco, cat_id1, (label_size * 2), cat_id2)
+        cat1_img_ids = cat_img_ids[0][:label_size]
+        cat2_img_ids = cat_img_ids[1][:label_size]
+        class_img_ids.extend(cat1_img_ids)
+        class_img_ids.extend(cat2_img_ids)
+    print(labels, 'train size:', len(class_img_ids))
 
-        class_img_ids = list(coco.getImgIds(catIds=[class_id]))
-        class_img_ids = list(set(class_img_ids))
-        class_img_ids = class_img_ids[:label_data_size]
-        print('# of images:', len(class_img_ids))
+    # get the images & also resize them as how it was prep for training in mrcnn
+    num = 0
+    class_images = []
+    print('Loading and resizing images...')
+    for i in class_img_ids:
+        img_path = coco.imgs[i]['coco_url']
+        img = load_image(img_path)
+        molded_img = mold_inputs(netL_config, img)
+        class_images.append(molded_img)
+        num += 1
+        if num % netL_config.STEPS_PER_EPOCH == 0:
+            print(label + ':', num, 'images are loaded and resized to shape', molded_img.shape)
+    print('\nDataset shape:', np.shape(class_images))
+    print('Images are loaded and resized, calculating RI...')
+    class_ri = relative_information(class_images)
+    print(label, 'RI:', class_ri)
 
-        # get the images & also resize them as how it was prep for training in mrcnn
-        # Note: should the data passed into ri be the images data or mask data of the label in the images?
-        num = 0
-        class_images = []
-        print('Loading and resizing images...')
-        for i in class_img_ids:
-            img_path = coco.imgs[i]['coco_url']
-            img = load_image(img_path)
-            molded_img = mold_inputs(netL_config, img)
-            class_images.append(molded_img)
-            num += 1
-            if num % 10 == 0:
-                print(label_name + ':', num, 'images are loaded and resized to shape', molded_img.shape)
-        print('Dataset shape:', np.shape(class_images))
-        print('Images are loaded and resized, calculating RI...')
-        class_ri = relative_information(class_images)
-        RIs.append({label_name: class_ri})
-        print(label_name, 'RI:', class_ri, '\n')
-
-    print(RIs)
-    print('Finish process.')
+    print('\nFinish process.')

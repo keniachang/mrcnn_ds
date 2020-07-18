@@ -32,14 +32,15 @@ assert label == 'bus' or label == 'train' or label == 'mix67'
 
 # Constants
 if label == 'mix67':
+    network_labels = ['bus', 'train']
     label_size = 250
 else:
+    network_labels = [label]
     label_size = 500
 images_per_weight = 10
 
 # initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'
 initial_weight_path = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
-
 
 
 class CocoConfig(Config):
@@ -210,12 +211,6 @@ class CocoDataset(utils.Dataset):
 
 
 if __name__ == '__main__':
-    # What coco label(s) data to use to train the network?
-    if label == 'mix67':
-        network_labels = ['bus', 'train']
-    else:
-        network_labels = [label]
-
     # Configurations
     config = CocoConfig()
     config.display()
