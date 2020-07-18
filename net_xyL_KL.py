@@ -105,16 +105,16 @@ def compare_network_head_weights(network_model, weight_path1, weight_path2, metr
     return dis
 
 
-def calc_network_weight(network_model, weight_path1, weight_path2, metric):
+def calc_network_weight(network_model1, network_model2, weight_path1, weight_path2, metric):
+    network_model1.load_weights(weight_path1, by_name=True)
+    network_model2.load_weights(weight_path2, by_name=True)
     dis = 0
     for var_name, layers in mrcnn_head.items():
         for layer_name in layers:
-            network_model.load_weights(weight_path1, by_name=True)
-            layer_weights1 = network_model.keras_model.get_layer(layer_name).get_weights()
+            layer_weights1 = network_model1.keras_model.get_layer(layer_name).get_weights()
             flatten_layer1 = resize_model(layer_weights1)
 
-            network_model.load_weights(weight_path2, by_name=True)
-            layer_weights2 = network_model.keras_model.get_layer(layer_name).get_weights()
+            layer_weights2 = network_model2.keras_model.get_layer(layer_name).get_weights()
             flatten_layer2 = resize_model(layer_weights2)
 
             dis += metric(flatten_layer1, flatten_layer2)
@@ -129,7 +129,8 @@ def save_data(data, path):
 if __name__ == '__main__':
     config = InferenceConfig()
     model_dir = os.path.join(ROOT_DIR, "logs")
-    model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+    model1 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+    model2 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
 
     label = train_network_xyL.label
     w_path_template = '../drive/My Drive/mrcnn_{}_head_weights/logs/mask_rcnn_coco_{}.h5'
@@ -142,7 +143,7 @@ if __name__ == '__main__':
 
     # kl_distance = compare_network_head_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
     # kl_ds = [kl_distance]
-    kl_distance = calc_network_weight(model, weight1_path, weight2_path, KL_div)
+    kl_distance = calc_network_weight(model1, model2, weight1_path, weight2_path, KL_div)
 
     print(kl_distance)
 
