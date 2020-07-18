@@ -1,4 +1,3 @@
-import sys
 import os
 import cfs_coco_train as coco
 import numpy as np
@@ -74,6 +73,7 @@ train_resnet_conv = ['conv1',
                      'res5b_branch2a', 'res5b_branch2b', 'res5b_branch2c',
                      'res5c_branch2a', 'res5c_branch2b', 'res5c_branch2c',
                      ]
+
 train_resnet_conv_a = [
     'res2a_branch2a',
     'res2b_branch2a',

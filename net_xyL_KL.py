@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats as ss
 import mrcnn.model as modellib
+from calculate import train_conv_layers, train_dense_layers, train_normal_layers, train_rpn_model, train_resnet_conv
 import train_network_xyL
 from net_xyL_acc import InferenceConfig
 
@@ -10,11 +11,13 @@ ROOT_DIR = os.path.abspath("./")
 
 # MRCNN network head structure
 mrcnn_head = {
-    'train_rpn_model': ['rpn_model'],
-    'train_conv_layers': ['fpn_c5p5', 'fpn_c4p4', 'fpn_c3p3', 'fpn_c2p2', 'fpn_p5', 'fpn_p2', 'fpn_p3', 'fpn_p4'],
-    'train_dense_layers': ['mrcnn_mask_conv1', 'mrcnn_mask_conv2', 'mrcnn_mask_conv3', 'mrcnn_mask_conv4',
-                           'mrcnn_bbox_fc', 'mrcnn_mask_deconv', 'mrcnn_class_logits', 'mrcnn_mask'],
-    'train_normal_layers': ['mrcnn_mask_bn1', 'mrcnn_mask_bn2', 'mrcnn_mask_bn3', 'mrcnn_mask_bn4']
+    'train_conv_layers': train_conv_layers,
+    'train_dense_layers': train_dense_layers,
+    'train_normal_layers': train_normal_layers,
+    'train_rpn_model': train_rpn_model
+}
+mrcnn_backbone = {
+    'train_resnet_conv': train_resnet_conv
 }
 
 
