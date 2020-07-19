@@ -132,7 +132,6 @@ def compare_network_whole_weights(network_model, weight_path1, weight_path2, met
                     layer_weights = network_model.keras_model.get_layer(layer_name).get_weights()
                     flatten_layer = resize_model(layer_weights)
                     v.extend(flatten_layer)
-            break
         vs.append(v)
     print('Computing', metric_name, 'on the two weights...')
     dis = metric(vs[0], vs[1])
@@ -148,7 +147,8 @@ if __name__ == '__main__':
     config = InferenceConfig()
     model_dir = os.path.join(ROOT_DIR, "logs")
     label = train_network_xyL.label
-    w_path_template = '../drive/My Drive/mrcnn_{}_head_weights/logs/mask_rcnn_coco_{}.h5'
+    # w_path_template = '../drive/My Drive/mrcnn_{}_head_weights/logs/mask_rcnn_coco_{}.h5'
+    w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
 
     start = "%04d" % 1
     end = "%04d" % 50
@@ -172,7 +172,7 @@ if __name__ == '__main__':
 
     print(kl_distance)
 
-    # output_path = '../drive/My Drive/mrcnn_{}_head_weights/{}_w{}_w{}_KL.csv'.format(label, label, start, end)
-    # save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
+    output_path = '../drive/My Drive/mrcnn_{}_weights/{}_w{}_w{}_whole_KL.csv'.format(label, label, start, end)
+    save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
 
     print('\nFinish Process.')
