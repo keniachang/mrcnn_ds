@@ -105,9 +105,7 @@ def compare_network_head_weights(network_model, weight_path1, weight_path2, metr
     return dis
 
 
-def calc_network_weight(network_model1, network_model2, weight_path1, weight_path2, metric):
-    network_model1.load_weights(weight_path1, by_name=True)
-    network_model2.load_weights(weight_path2, by_name=True)
+def compare_net_flw_lbl(network_model1, network_model2, metric):
     dis = 0
     for var_name, layers in mrcnn_head.items():
         for layer_name in layers:
@@ -121,6 +119,26 @@ def calc_network_weight(network_model1, network_model2, weight_path1, weight_pat
     return dis
 
 
+def compare_network_whole_weights(network_model, weight_path1, weight_path2, metric, metric_name):
+    weight_paths = [weight_path1, weight_path2]
+    vs = []
+    for weight_path in weight_paths:
+        print(weight_path)
+        network_model.load_weights(weight_path, by_name=True)
+        v = []
+        for struct in mrcnn_structure:
+            for name, layers in struct.items():
+                for layer_name in layers:
+                    layer_weights = network_model.keras_model.get_layer(layer_name).get_weights()
+                    flatten_layer = resize_model(layer_weights)
+                    v.extend(flatten_layer)
+            break
+        vs.append(v)
+    print('Computing', metric_name, 'on the two weights...')
+    dis = metric(vs[0], vs[1])
+    return dis
+
+
 def save_data(data, path):
     data_frame = pd.DataFrame(data)
     data_frame.to_csv(path, index=False, header=False)
@@ -129,9 +147,6 @@ def save_data(data, path):
 if __name__ == '__main__':
     config = InferenceConfig()
     model_dir = os.path.join(ROOT_DIR, "logs")
-    model1 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
-    model2 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
-
     label = train_network_xyL.label
     w_path_template = '../drive/My Drive/mrcnn_{}_head_weights/logs/mask_rcnn_coco_{}.h5'
 
@@ -141,9 +156,19 @@ if __name__ == '__main__':
     weight1_path = w_path_template.format(label, start)
     weight2_path = w_path_template.format(label, end)
 
+    # model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
     # kl_distance = compare_network_head_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
     # kl_ds = [kl_distance]
-    kl_distance = calc_network_weight(model1, model2, weight1_path, weight2_path, KL_div)
+
+    # model1 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+    # model2 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+    # model1.load_weights(weight1_path, by_name=True)
+    # model2.load_weights(weight2_path, by_name=True)
+    # kl_distance = compare_net_flw_lbl(model1, model2, KL_div)
+
+    model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+    kl_distance = compare_network_whole_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
+    kl_ds = [kl_distance]
 
     print(kl_distance)
 
