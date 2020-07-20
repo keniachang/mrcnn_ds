@@ -107,15 +107,28 @@ def compare_network_head_weights(network_model, weight_path1, weight_path2, metr
 
 def compare_net_flw_lbl(network_model1, network_model2, metric):
     dis = 0
-    for var_name, layers in mrcnn_head.items():
-        for layer_name in layers:
-            layer_weights1 = network_model1.keras_model.get_layer(layer_name).get_weights()
-            flatten_layer1 = resize_model(layer_weights1)
+    neg = 0
+    for i, mrcnn_struct in enumerate(mrcnn_structure):
+        if i == 0:
+            print('Processing the layers of head...')
+        else:
+            print('Processing the layers of backbone...')
+        for var_name, layers in mrcnn_struct.items():
+            print('Current: ' + var_name + '...')
+            for layer_name in layers:
+                layer_weights1 = network_model1.keras_model.get_layer(layer_name).get_weights()
+                flatten_layer1 = resize_model(layer_weights1)
 
-            layer_weights2 = network_model2.keras_model.get_layer(layer_name).get_weights()
-            flatten_layer2 = resize_model(layer_weights2)
+                layer_weights2 = network_model2.keras_model.get_layer(layer_name).get_weights()
+                flatten_layer2 = resize_model(layer_weights2)
 
-            dis += metric(flatten_layer1, flatten_layer2)
+                layer_KL = metric(flatten_layer1, flatten_layer2)
+                if layer_KL < 0:
+                    neg += 1
+                    print(neg, 'negative KL(s),', layer_KL, 'and it is treated as 0')
+                    layer_KL = 0
+
+                dis += layer_KL
     return dis
 
 
@@ -158,21 +171,20 @@ if __name__ == '__main__':
 
     # model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
     # kl_distance = compare_network_head_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
-    # kl_ds = [kl_distance]
 
-    # model1 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
-    # model2 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
-    # model1.load_weights(weight1_path, by_name=True)
-    # model2.load_weights(weight2_path, by_name=True)
-    # kl_distance = compare_net_flw_lbl(model1, model2, KL_div)
+    model1 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+    model2 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+    model1.load_weights(weight1_path, by_name=True)
+    model2.load_weights(weight2_path, by_name=True)
+    kl_distance = compare_net_flw_lbl(model1, model2, KL_div)
 
-    model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
-    kl_distance = compare_network_whole_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
+    # model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+    # kl_distance = compare_network_whole_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
+
     kl_ds = [kl_distance]
-
     print(kl_distance)
 
-    output_path = '../drive/My Drive/mrcnn_{}_weights/{}_w{}_w{}_whole_KL.csv'.format(label, label, start, end)
+    output_path = '../drive/My Drive/mrcnn_{}_weights/{}_w{}_w{}_lbl_KL.csv'.format(label, label, start, end)
     save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
 
     print('\nFinish Process.')
