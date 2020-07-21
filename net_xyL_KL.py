@@ -174,7 +174,8 @@ if __name__ == '__main__':
     model_dir = "./logs"
     label = args.label
     # w_path_template = '../drive/My Drive/mrcnn_{}_head_weights/logs/mask_rcnn_coco_{}.h5'
-    w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
+    # w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
+    w_path_template = '../drive/My Drive/mrcnn_{}_1_weights/logs/mask_rcnn_coco_{}.h5'
 
     start = "%04d" % 1
     end = "%04d" % 50
@@ -197,7 +198,7 @@ if __name__ == '__main__':
     kl_ds = [kl_distance]
     print(kl_distance)
 
-    output_path = '../drive/My Drive/mrcnn_{}_weights/{}_w{}_w{}_lbl_KL.csv'.format(label, label, start, end)
+    output_path = '../drive/My Drive/mrcnn_{}_1_weights/{}_w{}_w{}_lbl_KL.csv'.format(label, label, start, end)
     save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
 
     print('\nFinish Process.')

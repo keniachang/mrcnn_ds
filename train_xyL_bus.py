@@ -26,21 +26,13 @@ from mrcnn import model as modellib, utils
 dataset = 'coco_datasets'
 DEFAULT_DATASET_YEAR = "2014"
 
-# Which label to train network on?
-label = input('Enter the coco label use to train (bus/train/mix67): ')
-assert label == 'bus' or label == 'train' or label == 'mix67'
-
 # Constants
-if label == 'mix67':
-    network_labels = ['bus', 'train']
-    label_size = 250
-else:
-    network_labels = [label]
-    label_size = 500
+label = 'bus'
+network_labels = [label]
+label_size = 500
 images_per_weight = 10
-
-# initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'
-initial_weight_path = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
+initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'    # train all layers
+# initial_weight_path = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")         # train head layers
 
 
 class CocoConfig(Config):
@@ -65,7 +57,7 @@ class CocoConfig(Config):
     # Skip detections with < 70% confidence
     DETECTION_MIN_CONFIDENCE = 0.7
 
-    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_{}_head_weights/logs'.format(label)
+    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_bus_1_weights/logs'
 
 
 class CocoDataset(utils.Dataset):
@@ -86,18 +78,9 @@ class CocoDataset(utils.Dataset):
         selected_class_ids = coco.getCatIds(catNms=network_cats)
         image_ids = []
         if subset == 'train':
-            if len(selected_class_ids) == 1:
-                cat_id = selected_class_ids[0]
-                cat_img_ids = (get_xy_labels_data(coco, cat_id, label_size))[0]
-                image_ids.extend(cat_img_ids)
-            else:
-                cat_id1 = selected_class_ids[0]
-                cat_id2 = selected_class_ids[1]
-                cat_img_ids = get_xy_labels_data(coco, cat_id1, (label_size * 2), cat_id2)
-                cat1_img_ids = cat_img_ids[0][:label_size]
-                cat2_img_ids = cat_img_ids[1][:label_size]
-                image_ids.extend(cat1_img_ids)
-                image_ids.extend(cat2_img_ids)
+            cat_id = selected_class_ids[0]
+            cat_img_ids = (get_xy_labels_data(coco, cat_id, label_size))[0]
+            image_ids.extend(cat_img_ids)
         else:
             for cat_id in selected_class_ids:
                 image_ids.extend(list(coco.getImgIds(catIds=[cat_id])))
@@ -220,12 +203,12 @@ if __name__ == '__main__':
 
     # Load weights
     model_path = initial_weight_path
-    if not os.path.exists(model_path):
-        utils.download_trained_weights(model_path)
+    # if not os.path.exists(model_path):
+    #     utils.download_trained_weights(model_path)
     print("Loading weights ", model_path)
-    # model.load_weights(model_path, by_name=True)
-    model.load_weights(model_path, by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
-                                                          "mrcnn_bbox", "mrcnn_mask"])
+    model.load_weights(model_path, by_name=True)
+    # model.load_weights(model_path, by_name=True, exclude=["mrcnn_class_logits", "mrcnn_bbox_fc",
+    #                                                       "mrcnn_bbox", "mrcnn_mask"])
 
     # Training dataset
     dataset_train = CocoDataset()
@@ -243,7 +226,7 @@ if __name__ == '__main__':
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
                 epochs=total_epochs,
-                # layers='all')
-                layers='heads')
+                layers='all')
+                # layers='heads')
 
-    print('Finish process.')
+    print('\nFinish process.')
