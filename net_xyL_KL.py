@@ -5,10 +5,8 @@ import scipy.stats as ss
 import mrcnn.model as modellib
 from calculate import train_conv_layers, train_dense_layers, train_normal_layers, train_rpn_model, \
     train_resnet_conv_a, train_resnet_conv_b, train_resnet_conv_c, train_resnet_conv_r
-import train_network_xyL
-from net_xyL_acc import InferenceConfig
-
-ROOT_DIR = os.path.abspath("./")
+from train_xyL_bus import CocoConfig
+coco_config = CocoConfig()
 
 # MRCNN network structure
 mrcnn_head = {
@@ -24,6 +22,13 @@ mrcnn_backbone = {
     'train_resnet_conv_r': train_resnet_conv_r
 }
 mrcnn_structure = [mrcnn_head, mrcnn_backbone]
+
+
+class InferenceConfig(coco_config.__class__):
+    # Run detection on one image at a time
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 1
+    # DETECTION_MIN_CONFIDENCE = 0
 
 
 def softmax(a):
@@ -157,9 +162,17 @@ def save_data(data, path):
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='Calculate KL_div on a network.')
+    parser.add_argument('--label', required=True,
+                        metavar="<bus|train|mix67>",
+                        help="The label of the network to be computed KL_div on.")
+    args = parser.parse_args()
+    assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
+
     config = InferenceConfig()
-    model_dir = os.path.join(ROOT_DIR, "logs")
-    label = train_network_xyL.label
+    model_dir = "./logs"
+    label = args.label
     # w_path_template = '../drive/My Drive/mrcnn_{}_head_weights/logs/mask_rcnn_coco_{}.h5'
     w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
 
