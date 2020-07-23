@@ -31,7 +31,7 @@ label = 'train'
 network_labels = [label]
 label_size = 500
 images_per_weight = 10
-initial_weight_path = '../drive/My Drive/NetwB_InitW/mrcnn_coco_0001.h5'    # train all layers
+initial_weight_path = '../drive/My Drive/InitialWeights/net_bus_mrcnn_coco_0001.h5'    # train all layers
 # initial_weight_path = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")         # train head layers
 
 
@@ -57,7 +57,7 @@ class CocoConfig(Config):
     # Skip detections with < 70% confidence
     DETECTION_MIN_CONFIDENCE = 0.7
 
-    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_train_1_weights/logs'
+    DEFAULT_LOGS_DIR = '../drive/My Drive/mrcnn_train_weights/logs'
 
 
 class CocoDataset(utils.Dataset):
