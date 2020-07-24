@@ -171,7 +171,7 @@ if __name__ == '__main__':
                         help="The KL_div computation mode.")
     args = parser.parse_args()
     assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
-    assert args.mode == 'head' or args.label == 'lbl' or args.label == 'whole'
+    assert args.mode == 'head' or args.mode == 'lbl' or args.mode == 'whole'
 
     config = InferenceConfig()
     model_dir = "./logs"
