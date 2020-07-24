@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import numpy as np
 import scipy.stats as ss
@@ -141,11 +140,11 @@ def compare_network_whole_weights(network_model, weight_path1, weight_path2, met
     weight_paths = [weight_path1, weight_path2]
     vs = []
     for weight_path in weight_paths:
-        print(weight_path)
         network_model.load_weights(weight_path, by_name=True)
         v = []
         for struct in mrcnn_structure:
             for name, layers in struct.items():
+                print('Processing', name)
                 for layer_name in layers:
                     layer_weights = network_model.keras_model.get_layer(layer_name).get_weights()
                     flatten_layer = resize_model(layer_weights)
@@ -167,15 +166,19 @@ if __name__ == '__main__':
     parser.add_argument('--label', required=True,
                         metavar="<bus|train|mix67>",
                         help="The label of the network to be computed KL_div on.")
+    parser.add_argument('--mode', required=True,
+                        metavar="<head|lbl|whole>",
+                        help="The KL_div computation mode.")
     args = parser.parse_args()
     assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
+    assert args.mode == 'head' or args.label == 'lbl' or args.label == 'whole'
 
     config = InferenceConfig()
     model_dir = "./logs"
     label = args.label
     # w_path_template = '../drive/My Drive/mrcnn_{}_head_weights/logs/mask_rcnn_coco_{}.h5'
-    # w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
-    w_path_template = '../drive/My Drive/mrcnn_{}_1_weights/logs/mask_rcnn_coco_{}.h5'
+    # w_path_template = '../drive/My Drive/mrcnn_{}_1_weights/logs/mask_rcnn_coco_{}.h5'
+    w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
 
     start = "%04d" % 1
     end = "%04d" % 50
@@ -183,22 +186,26 @@ if __name__ == '__main__':
     weight1_path = w_path_template.format(label, start)
     weight2_path = w_path_template.format(label, end)
 
-    # model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
-    # kl_distance = compare_network_head_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
+    if args.mode == 'head':
+        model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+        kl_distance = compare_network_head_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
 
-    model1 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
-    model2 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
-    model1.load_weights(weight1_path, by_name=True)
-    model2.load_weights(weight2_path, by_name=True)
-    kl_distance = compare_net_flw_lbl(model1, model2, KL_div)
+    elif args.mode == 'lbl':
+        model1 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+        model2 = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+        model1.load_weights(weight1_path, by_name=True)
+        model2.load_weights(weight2_path, by_name=True)
+        kl_distance = compare_net_flw_lbl(model1, model2, KL_div)
 
-    # model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
-    # kl_distance = compare_network_whole_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
+    else:
+        model = modellib.MaskRCNN(mode="inference", config=config, model_dir=model_dir)
+        kl_distance = compare_network_whole_weights(model, weight1_path, weight2_path, KL_div, 'KL_div')
 
     kl_ds = [kl_distance]
+    print()
     print(kl_distance)
 
-    output_path = '../drive/My Drive/mrcnn_{}_1_weights/{}_w{}_w{}_lbl_KL.csv'.format(label, label, start, end)
+    output_path = '../drive/My Drive/mrcnn_{}_weights/{}_w{}_w{}_{}_KL.csv'.format(label, label, start, end, args.mode)
     save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
 
     print('\nFinish Process.')
