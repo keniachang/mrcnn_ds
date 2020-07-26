@@ -6,6 +6,7 @@ import skimage.color
 import skimage.transform
 import random
 from distutils.version import LooseVersion
+import matplotlib.pyplot as plt
 
 
 def softmax(a):
@@ -248,21 +249,51 @@ def mold_inputs(config, image):
     return molded_image
 
 
+def mask_image(coco_obj, img_id, cat_ids, image):
+    anns = coco_obj.loadAnns(coco_obj.getAnnIds(imgIds=[img_id], catIds=cat_ids, iscrowd=None))
+    mask = coco.annToMask(anns[0])
+    for ind in range(len(anns)):
+        mask |= coco.annToMask(anns[ind])
+    # return mask
+
+    masked_image = np.zeros(shape=image.shape[:3], dtype=np.uint8)
+    for h in range(image.shape[0]):
+        for w in range(image.shape[1]):
+            if mask[h, w] != 0:
+                masked_image[h, w, 0] = image[h, w, 0]
+                masked_image[h, w, 1] = image[h, w, 1]
+                masked_image[h, w, 2] = image[h, w, 2]
+    return masked_image
+
+
 if __name__ == '__main__':
     from PythonAPI.pycocotools.coco import COCO
-    import train_network_xyL as train_net
+    import train_xyL_bus as train_net
 
     # get the coco labels used in training x, y labels network to calculate RI
-    label = train_net.label
-    labels = train_net.network_labels
-    label_size = train_net.label_size
+    import argparse
+    parser = argparse.ArgumentParser(description='Calculate KL_div on a network.')
+    parser.add_argument('--label', required=True,
+                        metavar="<bus|train|mix67>",
+                        help="The label of the network to be computed KL_div on.")
+    args = parser.parse_args()
+    assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
+
+    label = args.label
+    assert label == 'bus' or label == 'train' or label == 'mix67'
+    if label == 'mix67':
+        labels = ['bus', 'train']
+        label_size = 250
+    else:
+        labels = [label]
+        label_size = 500
 
     # config
     netL_config = train_net.CocoConfig()
     netL_config.IMAGE_MIN_DIM = 400
     netL_config.IMAGE_MAX_DIM = 512
     netL_config.DEFAULT_LOGS_DIR = './logs'
-    netL_config.display()
+    # netL_config.display()
 
     coco = COCO("../drive/My Drive/coco_datasets/annotations/instances_train2014.json")
     print()
@@ -290,8 +321,16 @@ if __name__ == '__main__':
     print('Loading and resizing images...')
     for i in class_img_ids:
         img_path = coco.imgs[i]['coco_url']
-        img = load_image(img_path)
-        molded_img = mold_inputs(netL_config, img)
+        img = load_image(img_path)  # (height, width, 3)
+
+        # mask the image
+        m_img = mask_image(coco, i, class_ids, img)
+        # plt.imshow(m_img)
+        # plt.axis('off')
+        # plt.show()
+
+        # resize the image
+        molded_img = mold_inputs(netL_config, m_img)
         class_images.append(molded_img)
         num += 1
         if num % netL_config.STEPS_PER_EPOCH == 0:
@@ -300,5 +339,9 @@ if __name__ == '__main__':
     print('Images are loaded and resized, calculating RI...')
     class_ri = relative_information(class_images)
     print(label, 'RI:', class_ri)
+
+    # for i, img_id in enumerate(class_img_ids):
+    #     img_path = coco.imgs[img_id]['coco_url']
+    #     print(i, img_path)
 
     print('\nFinish process.')
