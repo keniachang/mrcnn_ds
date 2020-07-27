@@ -309,7 +309,7 @@ if __name__ == '__main__':
         cat2_img_ids = cat_img_ids[1][:label_size]
         class_img_ids.extend(cat1_img_ids)
         class_img_ids.extend(cat2_img_ids)
-    print(labels, 'train size:', len(class_img_ids))
+    print(labels, 'training size:', len(class_img_ids))
 
     # get the images & also resize them as how it was prep for training in mrcnn
     num = 0
