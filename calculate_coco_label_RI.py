@@ -7,6 +7,7 @@ import skimage.transform
 import random
 from distutils.version import LooseVersion
 import matplotlib.pyplot as plt
+from PIL import Image
 
 
 def softmax(a):
@@ -326,7 +327,9 @@ if __name__ == '__main__':
         # plt.show()
 
         # resize the image
-        molded_img = mold_inputs(netL_config, m_img)
+        # molded_img = mold_inputs(netL_config, m_img)
+        molded_img = Image.fromarray(m_img)
+        molded_img.resize(size=(512, 512))
         class_images.append(molded_img)
         num += 1
         if num % netL_config.STEPS_PER_EPOCH == 0:
