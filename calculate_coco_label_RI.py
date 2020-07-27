@@ -332,8 +332,7 @@ if __name__ == '__main__':
         class_images.append(molded_img)
         num += 1
         if num % netL_config.STEPS_PER_EPOCH == 0:
-            # print(label + ':', num, 'images are loaded and resized to shape', molded_img.shape)   # image
-            print(label + ':', num, 'images are loaded and resized to shape', molded_img.size)  # binary mask
+            print(label + ':', num, 'images are loaded and resized to shape', molded_img.shape)
     print('\nDataset shape:', np.shape(class_images))
     print('Images are loaded and resized, calculating RI...')
     class_ri = relative_information(class_images)
