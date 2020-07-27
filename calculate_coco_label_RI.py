@@ -255,7 +255,7 @@ def mask_image(coco_obj, img_id, cat_ids, image):
     mask = coco.annToMask(anns[0])
     for ind in range(len(anns)):
         mask |= coco.annToMask(anns[ind])
-    return mask
+    return mask     # binary mask
 
     # masked_image = np.zeros(shape=image.shape[:3], dtype=np.uint8)
     # for h in range(image.shape[0]):
@@ -264,7 +264,7 @@ def mask_image(coco_obj, img_id, cat_ids, image):
     #             masked_image[h, w, 0] = image[h, w, 0]
     #             masked_image[h, w, 1] = image[h, w, 1]
     #             masked_image[h, w, 2] = image[h, w, 2]
-    # return masked_image
+    # return masked_image   # image
 
 
 if __name__ == '__main__':
@@ -327,13 +327,14 @@ if __name__ == '__main__':
         # plt.show()
 
         # resize the image
-        # molded_img = mold_inputs(netL_config, m_img)
-        molded_img = Image.fromarray(m_img)
-        molded_img.resize(size=(512, 512))
+        # molded_img = mold_inputs(netL_config, m_img)  # image
+        molded_img = Image.fromarray(m_img)     # binary mask
+        molded_img.resize(size=(512, 512))      # binary mask
         class_images.append(molded_img)
         num += 1
         if num % netL_config.STEPS_PER_EPOCH == 0:
-            print(label + ':', num, 'images are loaded and resized to shape', molded_img.shape)
+            # print(label + ':', num, 'images are loaded and resized to shape', molded_img.shape)   # image
+            print(label + ':', num, 'images are loaded and resized to shape', molded_img.size)  # binary mask
     print('\nDataset shape:', np.shape(class_images))
     print('Images are loaded and resized, calculating RI...')
     class_ri = relative_information(class_images)
