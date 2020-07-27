@@ -254,16 +254,16 @@ def mask_image(coco_obj, img_id, cat_ids, image):
     mask = coco.annToMask(anns[0])
     for ind in range(len(anns)):
         mask |= coco.annToMask(anns[ind])
-    # return mask
+    return mask
 
-    masked_image = np.zeros(shape=image.shape[:3], dtype=np.uint8)
-    for h in range(image.shape[0]):
-        for w in range(image.shape[1]):
-            if mask[h, w] != 0:
-                masked_image[h, w, 0] = image[h, w, 0]
-                masked_image[h, w, 1] = image[h, w, 1]
-                masked_image[h, w, 2] = image[h, w, 2]
-    return masked_image
+    # masked_image = np.zeros(shape=image.shape[:3], dtype=np.uint8)
+    # for h in range(image.shape[0]):
+    #     for w in range(image.shape[1]):
+    #         if mask[h, w] != 0:
+    #             masked_image[h, w, 0] = image[h, w, 0]
+    #             masked_image[h, w, 1] = image[h, w, 1]
+    #             masked_image[h, w, 2] = image[h, w, 2]
+    # return masked_image
 
 
 if __name__ == '__main__':
