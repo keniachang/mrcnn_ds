@@ -328,8 +328,7 @@ if __name__ == '__main__':
 
         # resize the image
         # molded_img = mold_inputs(netL_config, m_img)  # image
-        molded_img = Image.fromarray(m_img)     # binary mask
-        molded_img.resize(size=(512, 512))      # binary mask
+        molded_img = skimage.transform.resize(m_img, (512, 512))      # binary mask
         class_images.append(molded_img)
         num += 1
         if num % netL_config.STEPS_PER_EPOCH == 0:
