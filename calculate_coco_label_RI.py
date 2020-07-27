@@ -280,7 +280,6 @@ if __name__ == '__main__':
     assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
 
     label = args.label
-    assert label == 'bus' or label == 'train' or label == 'mix67'
     if label == 'mix67':
         labels = ['bus', 'train']
         label_size = 250
@@ -302,13 +301,10 @@ if __name__ == '__main__':
     class_ids = coco.getCatIds(catNms=labels)
     class_img_ids = []
     if len(class_ids) == 1:
-        cat_id = class_ids[0]
-        cat_img_ids = (train_net.get_xy_labels_data(coco, cat_id, label_size))[0]
+        cat_img_ids = (train_net.get_xy_labels_data(coco, class_ids[0], label_size))[0]
         class_img_ids.extend(cat_img_ids)
     else:
-        cat_id1 = class_ids[0]
-        cat_id2 = class_ids[1]
-        cat_img_ids = train_net.get_xy_labels_data(coco, cat_id1, (label_size * 2), cat_id2)
+        cat_img_ids = train_net.get_xy_labels_data(coco, class_ids[0], (label_size * 2), class_ids[1])
         cat1_img_ids = cat_img_ids[0][:label_size]
         cat2_img_ids = cat_img_ids[1][:label_size]
         class_img_ids.extend(cat1_img_ids)
