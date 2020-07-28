@@ -281,9 +281,11 @@ if __name__ == '__main__':
                         help="The label of the network to be computed KL_div on.")
     args = parser.parse_args()
     # assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
-    assert args.label in coco_categories[:10]
+    # assert args.label in coco_categories[:10]
 
-    label = args.label
+    # label = args.label
+    label = 'traffic light'
+    assert label in coco_categories[:10]
     # if label == 'mix67':
     #     labels = ['bus', 'train']
     #     label_size = 250
