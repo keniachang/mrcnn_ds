@@ -255,16 +255,16 @@ def mask_image(coco_obj, img_id, cat_ids, image):
     mask = coco.annToMask(anns[0])
     for ind in range(len(anns)):
         mask |= coco.annToMask(anns[ind])
-    return mask     # binary mask
+    # return mask     # binary mask
 
-    # masked_image = np.zeros(shape=image.shape[:3], dtype=np.uint8)
-    # for h in range(image.shape[0]):
-    #     for w in range(image.shape[1]):
-    #         if mask[h, w] != 0:
-    #             masked_image[h, w, 0] = image[h, w, 0]
-    #             masked_image[h, w, 1] = image[h, w, 1]
-    #             masked_image[h, w, 2] = image[h, w, 2]
-    # return masked_image   # image
+    masked_image = np.zeros(shape=image.shape[:3], dtype=np.uint8)
+    for h in range(image.shape[0]):
+        for w in range(image.shape[1]):
+            if mask[h, w] != 0:
+                masked_image[h, w, 0] = image[h, w, 0]
+                masked_image[h, w, 1] = image[h, w, 1]
+                masked_image[h, w, 2] = image[h, w, 2]
+    return masked_image   # image
 
 
 if __name__ == '__main__':
@@ -272,27 +272,23 @@ if __name__ == '__main__':
     import train_xyL_bus as train_net
     from find_catID import coco_categories
 
-    # get the coco labels used in training x, y labels network to calculate RI
-    import argparse
-    parser = argparse.ArgumentParser(description='Calculate KL_div on a network.')
-    parser.add_argument('--label', required=True,
-                        # metavar="<bus|train|mix67>",
-                        metavar="first 10 coco labels",
-                        help="The label of the network to be computed KL_div on.")
-    args = parser.parse_args()
+    # # get the coco labels used in training x, y labels network to calculate RI
+    # import argparse
+    # parser = argparse.ArgumentParser(description='Calculate KL_div on a network.')
+    # parser.add_argument('--label', required=True,
+    #                     metavar="<bus|train|mix67>",
+    #                     help="The label of the network to be computed KL_div on.")
+    # args = parser.parse_args()
     # assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
-    # assert args.label in coco_categories[:10]
-
     # label = args.label
-    label = 'traffic light'
-    assert label in coco_categories[:10]
     # if label == 'mix67':
     #     labels = ['bus', 'train']
     #     label_size = 250
     # else:
     #     labels = [label]
     #     label_size = 500
-    labels = [label]
+
+    labels = coco_categories[:10]
     label_size = 500
 
     # config
@@ -317,38 +313,48 @@ if __name__ == '__main__':
     #     cat2_img_ids = cat_img_ids[1][:label_size]
     #     class_img_ids.extend(cat1_img_ids)
     #     class_img_ids.extend(cat2_img_ids)
-    class_img_ids = list(coco.getImgIds(catIds=class_ids))
-    class_img_ids = list(set(class_img_ids))
-    class_img_ids = class_img_ids[:label_size]
+    RIs = []
+    for class_id in class_ids:
+        label = (coco.loadCats(class_id)[0])['name']
 
-    print(labels, 'training size:', len(class_img_ids))
+        class_img_ids = list(coco.getImgIds(catIds=[class_id]))
+        class_img_ids = list(set(class_img_ids))
+        class_img_ids = class_img_ids[:label_size]
 
-    # get the images & also resize them as how it was prep for training in mrcnn
-    num = 0
-    class_images = []
-    print('Loading and resizing images...')
-    for i in class_img_ids:
-        img_path = coco.imgs[i]['coco_url']
-        img = load_image(img_path)  # (height, width, 3)
+        """
+        Following code same for both x,y and first 10 labels RI computations (3 modes) except indentation
+        """
+        # print(labels, 'training size:', len(class_img_ids))   # x,y labels
+        print(label, 'training size:', len(class_img_ids))  # first 10 labels
 
-        # mask the image
-        m_img = mask_image(coco, i, class_ids, img)
-        # plt.imshow(m_img)
-        # plt.axis('off')
-        # plt.show()
+        # get the images & also resize them as how it was prep for training in mrcnn
+        # num = 0
+        class_images = []
+        print('Loading and resizing images...')
+        for i in class_img_ids:
+            img_path = coco.imgs[i]['coco_url']
+            img = load_image(img_path)  # (height, width, 3)
 
-        # resize the image
-        # molded_img = mold_inputs(netL_config, m_img)  # image
-        molded_img = skimage.transform.resize(m_img, (512, 512))      # binary mask
+            # mask the image
+            m_img = mask_image(coco, i, class_ids, img)
+            # plt.imshow(m_img)
+            # plt.axis('off')
+            # plt.show()
 
-        class_images.append(molded_img)
-        num += 1
-        if num % netL_config.STEPS_PER_EPOCH == 0:
-            print(label + ':', num, 'images are loaded and resized to shape', molded_img.shape)
-    print('\nDataset shape:', np.shape(class_images))
-    print('Images are loaded and resized, calculating RI...')
-    class_ri = relative_information(class_images)
-    print(label, 'RI:', class_ri)
+            # resize the image
+            molded_img = mold_inputs(netL_config, m_img)  # image
+            # molded_img = skimage.transform.resize(m_img, (512, 512))      # binary mask
+
+            class_images.append(molded_img)
+            # num += 1
+            # if num % netL_config.STEPS_PER_EPOCH == 0:
+            #     print(label + ':', num, 'images are loaded and resized to shape', molded_img.shape)
+        print('\nDataset shape:', np.shape(class_images))
+        print('Images are loaded and resized, calculating RI...')
+        class_ri = relative_information(class_images)
+        print(label, 'RI:', class_ri)
+        RIs.append({label: class_ri})
+    print(RIs)
 
     # for i, img_id in enumerate(class_img_ids):
     #     img_path = coco.imgs[img_id]['coco_url']
