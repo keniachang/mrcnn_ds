@@ -354,6 +354,7 @@ if __name__ == '__main__':
         class_ri = relative_information(class_images)
         print(label, 'RI:', class_ri)
         RIs.append({label: class_ri})
+        print()
     print(RIs)
 
     # for i, img_id in enumerate(class_img_ids):
