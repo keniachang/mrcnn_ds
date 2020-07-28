@@ -161,6 +161,8 @@ def save_data(data, path):
 
 
 if __name__ == '__main__':
+    from find_catID import coco_categories
+
     import argparse
     parser = argparse.ArgumentParser(description='Calculate KL_div on a network.')
     parser.add_argument('--label', required=True,
@@ -170,15 +172,16 @@ if __name__ == '__main__':
                         metavar="<head|lbl|whole>",
                         help="The KL_div computation mode.")
     args = parser.parse_args()
-    assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
+    # assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
+    assert args.label in coco_categories[:10]
     assert args.mode == 'head' or args.mode == 'lbl' or args.mode == 'whole'
 
     config = InferenceConfig()
     model_dir = "./logs"
     label = args.label
     # w_path_template = '../drive/My Drive/mrcnn_{}_head_weights/logs/mask_rcnn_coco_{}.h5'
-    # w_path_template = '../drive/My Drive/mrcnn_{}_1_weights/logs/mask_rcnn_coco_{}.h5'
-    w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
+    # w_path_template = '../drive/My Drive/mrcnn_{}_weights/logs/mask_rcnn_coco_{}.h5'
+    w_path_template = '../drive/My Drive/mrcnn_cl10_{}_weights/logs/mask_rcnn_coco_{}.h5'
 
     start = "%04d" % 1
     end = "%04d" % 50
@@ -205,7 +208,8 @@ if __name__ == '__main__':
     print()
     print(kl_distance)
 
-    output_path = '../drive/My Drive/mrcnn_{}_weights/{}_w{}_w{}_{}_KL.csv'.format(label, label, start, end, args.mode)
+    output_path = '../drive/My Drive/mrcnn_cl10_{}_weights/{}_w{}_w{}_{}_KL.csv'.format(label,
+                                                                                        label, start, end, args.mode)
     save_data((np.asarray(kl_ds, dtype=np.float64)), output_path)
 
     print('\nFinish Process.')
