@@ -270,23 +270,28 @@ def mask_image(coco_obj, img_id, cat_ids, image):
 if __name__ == '__main__':
     from PythonAPI.pycocotools.coco import COCO
     import train_xyL_bus as train_net
+    from find_catID import coco_categories
 
     # get the coco labels used in training x, y labels network to calculate RI
     import argparse
     parser = argparse.ArgumentParser(description='Calculate KL_div on a network.')
     parser.add_argument('--label', required=True,
-                        metavar="<bus|train|mix67>",
+                        # metavar="<bus|train|mix67>",
+                        metavar="first 10 coco labels",
                         help="The label of the network to be computed KL_div on.")
     args = parser.parse_args()
-    assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
+    # assert args.label == 'bus' or args.label == 'train' or args.label == 'mix67'
+    assert args.label in coco_categories[:10]
 
     label = args.label
-    if label == 'mix67':
-        labels = ['bus', 'train']
-        label_size = 250
-    else:
-        labels = [label]
-        label_size = 500
+    # if label == 'mix67':
+    #     labels = ['bus', 'train']
+    #     label_size = 250
+    # else:
+    #     labels = [label]
+    #     label_size = 500
+    labels = [label]
+    label_size = 500
 
     # config
     netL_config = train_net.CocoConfig()
@@ -300,16 +305,20 @@ if __name__ == '__main__':
 
     # get the image ids of the training dataset
     class_ids = coco.getCatIds(catNms=labels)
-    class_img_ids = []
-    if len(class_ids) == 1:
-        cat_img_ids = (train_net.get_xy_labels_data(coco, class_ids[0], label_size))[0]
-        class_img_ids.extend(cat_img_ids)
-    else:
-        cat_img_ids = train_net.get_xy_labels_data(coco, class_ids[0], (label_size * 2), class_ids[1])
-        cat1_img_ids = cat_img_ids[0][:label_size]
-        cat2_img_ids = cat_img_ids[1][:label_size]
-        class_img_ids.extend(cat1_img_ids)
-        class_img_ids.extend(cat2_img_ids)
+    # class_img_ids = []
+    # if len(class_ids) == 1:
+    #     cat_img_ids = (train_net.get_xy_labels_data(coco, class_ids[0], label_size))[0]
+    #     class_img_ids.extend(cat_img_ids)
+    # else:
+    #     cat_img_ids = train_net.get_xy_labels_data(coco, class_ids[0], (label_size * 2), class_ids[1])
+    #     cat1_img_ids = cat_img_ids[0][:label_size]
+    #     cat2_img_ids = cat_img_ids[1][:label_size]
+    #     class_img_ids.extend(cat1_img_ids)
+    #     class_img_ids.extend(cat2_img_ids)
+    class_img_ids = list(coco.getImgIds(catIds=class_ids))
+    class_img_ids = list(set(class_img_ids))
+    class_img_ids = class_img_ids[:label_size]
+
     print(labels, 'training size:', len(class_img_ids))
 
     # get the images & also resize them as how it was prep for training in mrcnn
@@ -329,6 +338,7 @@ if __name__ == '__main__':
         # resize the image
         # molded_img = mold_inputs(netL_config, m_img)  # image
         molded_img = skimage.transform.resize(m_img, (512, 512))      # binary mask
+
         class_images.append(molded_img)
         num += 1
         if num % netL_config.STEPS_PER_EPOCH == 0:
